@@ -1,0 +1,18 @@
+# Node modules
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+# Environment variables
+.env
+backend/.env
+frontend/.env
+# IDE / Editor files
+.idea/
+.vscode/
+
+# macOS system files
+.DS_Store
+# Build outputs
+frontend/build/
+frontend/dist/
+
