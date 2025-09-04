@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Header from '../components/Header';
 import './HomePages.css'; // move all CSS here (optional if using Tailwind)
 
 const Homepage = () => {
@@ -47,66 +48,7 @@ const Homepage = () => {
                 <div className="absolute inset-0 bg-black bg-opacity-50"></div>
             </div>
 
-            {/* Header */}
-            <header className="relative z-10 p-6">
-                <nav className="flex items-center justify-between max-w-7xl mx-auto">
-                    {/* Logo */}
-                    <div className="text-4xl font-bold text-white">🍕 Food<span className="text-orange-400">Freaky</span></div>
-
-                    {/* Desktop Navigation */}
-                    <div className="hidden md:flex items-center space-x-6">
-                        <button
-                            onClick={() => handleNavClick('Restaurants')}
-                            className="bg-white bg-opacity-10 backdrop-blur-sm text-white hover:bg-orange-500 hover:bg-opacity-100 px-6 py-3 rounded-full transition-all duration-300 transform hover:scale-105 font-normal border border-white border-opacity-30 shadow-lg tracking-wide"
-                        >
-                            🍽️ Restaurants
-                        </button>
-                        <button
-                            onClick={() => handleNavClick('Register')}
-                            className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white px-8 py-3 rounded-full transition-all duration-300 transform hover:scale-105 font-normal shadow-xl hover:shadow-2xl tracking-wide"
-                        >
-                            ✨ Register
-                        </button>
-                        <button
-                            onClick={() => handleNavClick('Login')}
-                            className="bg-transparent border-2 border-orange-400 text-orange-400 hover:bg-orange-400 hover:text-white px-8 py-3 rounded-full transition-all duration-300 transform hover:scale-105 font-normal shadow-lg hover:shadow-xl tracking-wide"
-                        >
-                            🔐 Login
-                        </button>
-                    </div>
-
-                    {/* Mobile Menu Button */}
-                    <button onClick={toggleMenu} className="md:hidden text-white text-2xl">
-                        {isMenuOpen ? '✕' : '☰'}
-                    </button>
-                </nav>
-
-                {/* Mobile Navigation */}
-                {isMenuOpen && (
-                    <div className="md:hidden mt-4 bg-black bg-opacity-80 rounded-lg p-4">
-                        <div className="flex flex-col space-y-4">
-                            <button
-                                onClick={() => handleNavClick('Restaurants')}
-                                className="bg-white bg-opacity-10 backdrop-blur-sm text-white hover:bg-orange-500 hover:bg-opacity-100 px-6 py-3 rounded-full transition-all duration-300 transform hover:scale-105 font-semibold border border-white border-opacity-30 text-left"
-                            >
-                                🍽️ Restaurants
-                            </button>
-                            <button
-                                onClick={() => handleNavClick('Register')}
-                                className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white px-8 py-3 rounded-full transition-all duration-300 transform hover:scale-105 font-semibold shadow-xl hover:shadow-2xl"
-                            >
-                                ✨ Register
-                            </button>
-                            <button
-                                onClick={() => handleNavClick('Login')}
-                                className="bg-transparent border-2 border-orange-400 text-orange-400 hover:bg-orange-400 hover:text-white px-8 py-3 rounded-full transition-all duration-300 transform hover:scale-105 font-semibold shadow-lg hover:shadow-xl"
-                            >
-                                🔐 Login
-                            </button>
-                        </div>
-                    </div>
-                )}
-            </header>
+            <Header />
 
             {/* Main Content */}
             <main className="relative z-10 flex flex-grow items-center justify-center px-6">
@@ -118,7 +60,7 @@ const Homepage = () => {
                         Delicious food delivered to your doorstep in minutes
                     </p>
                     <button
-                        onClick={() => handleNavClick('Restaurants')}
+                        onClick={() => navigate('/restaurants')}
                         className="bg-orange-500 hover:bg-orange-600 text-white px-12 py-4 rounded-full text-xl font-bold transition-all duration-300 transform hover:scale-105 shadow-2xl"
                     >
                         Order Now 🚀

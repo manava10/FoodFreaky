@@ -1,0 +1,108 @@
+.checkout-page-container {
+    min-height: 100vh;
+    background-image: url('https://images.unsplash.com/photo-1504674900247-0877df9cc836');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    position: relative;
+}
+
+.checkout-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+}
+
+@media (min-width: 1024px) {
+    .checkout-grid {
+        grid-template-columns: 2fr 1fr;
+    }
+}
+
+.checkout-details {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.detail-card, .order-summary {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+}
+
+.card-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 0.75rem;
+}
+
+.summary-item, .price-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+    color: #4b5563;
+}
+
+.price-row.discount {
+    color: #16a34a;
+}
+
+.price-row.total {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+.coupon-section {
+    display: flex;
+    margin: 1.5rem 0;
+}
+
+.coupon-input {
+    flex-grow: 1;
+    border: 1px solid #d1d5db;
+    padding: 0.75rem;
+    border-radius: 0.5rem 0 0 0.5rem;
+    outline: none;
+}
+
+.coupon-btn {
+    background-color: #fb923c;
+    color: white;
+    border: none;
+    padding: 0 1.5rem;
+    border-radius: 0 0.5rem 0.5rem 0;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.place-order-btn {
+    width: 100%;
+    padding: 1rem;
+    background-color: #f97316;
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.place-order-btn:hover {
+    background-color: #ea580c;
+}
+
+.place-order-btn:disabled {
+    background-color: #9ca3af;
+    cursor: not-allowed;
+}

@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
+import Header from '../components/Header';
 import './LoginPage.css';
 
 const LoginPage = () => {
@@ -12,6 +15,21 @@ const LoginPage = () => {
     const [errors, setErrors] = useState({});
     const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
+    const { login, isLoggedIn } = useAuth();
+    const location = useLocation();
+    const [successMessage, setSuccessMessage] = useState('');
+
+    useEffect(() => {
+        if (isLoggedIn) {
+            navigate('/dashboard');
+        }
+    }, [isLoggedIn, navigate]);
+
+    useEffect(() => {
+        if (location.state && location.state.message) {
+            setSuccessMessage(location.state.message);
+        }
+    }, [location.state]);
 
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -43,13 +61,30 @@ const LoginPage = () => {
         return newErrors;
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         const newErrors = validateForm();
         
         if (Object.keys(newErrors).length === 0) {
-            alert('Login successful! Welcome back to FoodFreaky! 🎉');
-            // Here you would typically send data to your backend
+            try {
+                const config = {
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                };
+
+                const { data } = await axios.post(
+                    'http://localhost:5001/api/auth/login',
+                    { email: formData.email, password: formData.password },
+                    config
+                );
+
+                login(data.token);
+                navigate('/dashboard');
+            } catch (error) {
+                const a = (error.response && error.response.data && error.response.data.msg) || 'Login failed';
+                setErrors({ ...errors, form: a });
+            }
         } else {
             setErrors(newErrors);
         }
@@ -93,17 +128,7 @@ const LoginPage = () => {
                 <div className="absolute inset-0 bg-black bg-opacity-70"></div>
             </div>
 
-            {/* Header */}
-            <header className="relative z-10 p-6">
-                <nav className="flex items-center justify-end max-w-7xl mx-auto">
-                    <button 
-                        onClick={goBack}
-                        className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white px-6 py-3 rounded-lg transition-all duration-300 font-semibold tracking-wide shadow-xl hover:shadow-2xl transform hover:scale-110 border-2 border-orange-400"
-                    >
-                        ← Back to Home
-                    </button>
-                </nav>
-            </header>
+            <Header />
 
             {/* Main Content */}
             <main className="relative z-10 flex items-center justify-center px-6 py-8">
@@ -117,6 +142,9 @@ const LoginPage = () => {
                             <p className="text-gray-600 font-light text-sm">Sign in to your account and continue your food journey!</p>
                         </div>
 
+                        {successMessage && <p className="text-green-500 text-center text-sm mb-4">{successMessage}</p>}
+                        {errors.form && <p className="text-red-500 text-center text-sm mb-4">{errors.form}</p>}
+                        
                         <form onSubmit={handleSubmit} className="space-y-5">
                             {/* Email Field */}
                             <div>

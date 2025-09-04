@@ -1,3 +1,7 @@
+@import-normalize;
+@import-glob "./components/**/*.css";
+@import-glob "./pages/**/*.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
