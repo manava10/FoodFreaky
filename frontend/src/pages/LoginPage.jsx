@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import Header from '../components/Header';
-import './LoginPage.css';
+import './AuthPage.css'; // Changed to shared CSS
 
 const LoginPage = () => {
     const [formData, setFormData] = useState({
@@ -64,38 +63,22 @@ const LoginPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         const newErrors = validateForm();
+        setErrors(newErrors);
         
         if (Object.keys(newErrors).length === 0) {
             try {
-                const config = {
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                };
-
-                const { data } = await axios.post(
-                    'http://localhost:5001/api/auth/login',
-                    { email: formData.email, password: formData.password },
-                    config
-                );
-
-                login(data.token);
+                // Use the login function from AuthContext
+                await login(formData.email, formData.password);
                 navigate('/dashboard');
             } catch (error) {
-                const a = (error.response && error.response.data && error.response.data.msg) || 'Login failed';
-                setErrors({ ...errors, form: a });
+                const errorMsg = (error.response && error.response.data && error.response.data.msg) || 'Login failed. Please check credentials.';
+                setErrors({ ...newErrors, form: errorMsg });
             }
-        } else {
-            setErrors(newErrors);
         }
     };
 
-    const goBack = () => {
-        navigate('/');
-    };
-
     const handleForgotPassword = () => {
-        alert('Password reset link will be sent to your email! 📧');
+        navigate('/forgot-password');
     };
 
     const handleGoogleLogin = () => {
@@ -107,7 +90,7 @@ const LoginPage = () => {
     };
 
     return (
-        <div className="min-h-screen relative">
+        <div className="min-h-screen relative auth-page">
             {/* Food Background */}
             <div 
                 className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -143,18 +126,18 @@ const LoginPage = () => {
                         </div>
 
                         {successMessage && <p className="text-green-500 text-center text-sm mb-4">{successMessage}</p>}
-                        {errors.form && <p className="text-red-500 text-center text-sm mb-4">{errors.form}</p>}
+                        {errors.form && <p className="auth-error-message">{errors.form}</p>}
                         
                         <form onSubmit={handleSubmit} className="space-y-5">
                             {/* Email Field */}
                             <div>
-                                <label className="block text-gray-700 font-medium mb-2 text-sm">Email Address</label>
+                                <label className="auth-label">Email Address</label>
                                 <input
                                     type="email"
                                     name="email"
                                     value={formData.email}
                                     onChange={handleInputChange}
-                                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-300 text-sm ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
+                                    className={`auth-input ${errors.email ? 'border-red-500' : ''}`}
                                     placeholder="Enter your email address"
                                 />
                                 {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
@@ -162,14 +145,14 @@ const LoginPage = () => {
 
                             {/* Password Field */}
                             <div>
-                                <label className="block text-gray-700 font-medium mb-2 text-sm">Password</label>
+                                <label className="auth-label">Password</label>
                                 <div className="relative">
                                     <input
                                         type={showPassword ? "text" : "password"}
                                         name="password"
                                         value={formData.password}
                                         onChange={handleInputChange}
-                                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-300 pr-12 text-sm ${errors.password ? 'border-red-500' : 'border-gray-300'}`}
+                                        className={`auth-input pr-12 ${errors.password ? 'border-red-500' : ''}`}
                                         placeholder="Enter your password"
                                     />
                                     <button
@@ -209,7 +192,7 @@ const LoginPage = () => {
                             {/* Submit Button */}
                             <button
                                 type="submit"
-                                className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                                className="auth-submit-btn"
                             >
                                 Sign In 🚀
                             </button>

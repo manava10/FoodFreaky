@@ -1,5 +1,6 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import axios from 'axios';
+import { jwtDecode } from 'jwt-decode';
 
 const AuthContext = createContext();
 
@@ -11,46 +12,62 @@ export const AuthProvider = ({ children }) => {
     const [authToken, setAuthToken] = useState(localStorage.getItem('authToken'));
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [isLoggedIn, setIsLoggedIn] = useState(!!authToken);
 
-    useEffect(() => {
-        const fetchUser = async () => {
-            if (authToken) {
-                try {
-                    const config = {
-                        headers: {
-                            Authorization: `Bearer ${authToken}`,
-                        },
-                    };
-                    const { data } = await axios.get('http://localhost:5001/api/auth/me', config);
-                    setUser(data.data);
-                } catch (error) {
-                    // Token is invalid or expired
-                    localStorage.removeItem('authToken');
-                    setAuthToken(null);
-                    setUser(null);
-                }
+    const fetchUser = useCallback(() => {
+        if (authToken) {
+            try {
+                const decoded = jwtDecode(authToken);
+                // Ensure the user state is set with all available info from the token
+                setUser({
+                    id: decoded.id,
+                    name: decoded.name,
+                    email: decoded.email,
+                    role: decoded.role,
+                    contactNumber: decoded.contactNumber, // Make sure to get it from the token
+                    createdAt: decoded.createdAt
+                });
+                setIsLoggedIn(true);
+            } catch (error) {
+                console.error("Invalid token", error);
+                // Token is invalid or expired
+                localStorage.removeItem('authToken');
+                setAuthToken(null);
+                setUser(null);
+                setIsLoggedIn(false);
             }
-            setLoading(false);
-        };
-
-        fetchUser();
+        }
+        setLoading(false);
     }, [authToken]);
 
-    const login = (token) => {
-        localStorage.setItem('authToken', token);
-        setAuthToken(token);
+    useEffect(() => {
+        fetchUser();
+    }, [fetchUser]);
+
+    const login = async (email, password) => {
+        try {
+            const { data } = await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/login`, { email, password });
+            localStorage.setItem('authToken', data.token);
+            setUser(data.user); // Restore this line to use the user object from the response
+            setIsLoggedIn(true); // Restore this line for immediate state update
+            setAuthToken(data.token);
+        } catch (error) {
+            console.error('Login failed:', error);
+            throw error;
+        }
     };
 
     const logout = () => {
         localStorage.removeItem('authToken');
         setAuthToken(null);
         setUser(null);
+        setIsLoggedIn(false);
     };
 
     const value = {
         authToken,
         user,
-        isLoggedIn: !!authToken,
+        isLoggedIn,
         loading,
         login,
         logout,
@@ -58,7 +75,7 @@ export const AuthProvider = ({ children }) => {
 
     return (
         <AuthContext.Provider value={value}>
-            {!loading && children}
+            {children}
         </AuthContext.Provider>
     );
 };

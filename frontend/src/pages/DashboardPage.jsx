@@ -1,16 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Modal from '../components/Modal';
 import { useAuth } from '../context/AuthContext';
 import Header from '../components/Header';
 import './DashboardPage.css';
 
-function DashboardPage() {
-    const { user, authToken } = useAuth();
-    const navigate = useNavigate();
+const DashboardPage = () => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
+    const { user, authToken } = useAuth();
     const [selectedOrder, setSelectedOrder] = useState(null);
 
     useEffect(() => {
@@ -19,7 +17,7 @@ function DashboardPage() {
                 const config = {
                     headers: { Authorization: `Bearer ${authToken}` },
                 };
-                const { data } = await axios.get('http://localhost:5001/api/orders/myorders', config);
+                const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/api/orders/myorders`, config);
                 setOrders(data.data);
             } catch (error) {
                 console.error('Failed to fetch orders:', error);
@@ -44,7 +42,7 @@ function DashboardPage() {
             const config = {
                 headers: { Authorization: `Bearer ${authToken}` },
             };
-            const { data: updatedOrder } = await axios.put(`http://localhost:5001/api/orders/${orderId}/cancel`, {}, config);
+            const { data: updatedOrder } = await axios.put(`${process.env.REACT_APP_API_URL}/api/orders/${orderId}/cancel`, {}, config);
             
             setOrders(prevOrders => 
                 prevOrders.map(order => 

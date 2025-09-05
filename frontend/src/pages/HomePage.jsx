@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import './HomePages.css'; // move all CSS here (optional if using Tailwind)
 
-const Homepage = () => {
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
+const HomePage = () => {
+    const [isMenuOpen] = useState(false);
     const navigate = useNavigate();
 
-    const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+    const handleButtonClick = (path) => {
+        navigate(path);
+    };
 
     const handleNavClick = (section) => {
         switch (section) {
@@ -53,10 +55,10 @@ const Homepage = () => {
             {/* Main Content */}
             <main className="relative z-10 flex flex-grow items-center justify-center px-6">
                 <div className="text-center max-w-4xl mx-auto">
-                    <h1 className="text-6xl md:text-8xl font-light text-white mb-6 leading-tight tracking-wide">
+                    <h1 className="text-5xl sm:text-6xl md:text-8xl font-light text-white mb-6 leading-tight tracking-wide">
                         Food<span className="text-orange-400 font-normal">Freaky</span>
                     </h1>
-                    <p className="text-xl md:text-2xl text-white mb-8 opacity-90 font-light tracking-wide">
+                    <p className="text-lg sm:text-xl md:text-2xl text-white mb-8 opacity-90 font-light tracking-wide">
                         Delicious food delivered to your doorstep in minutes
                     </p>
                     <button
@@ -109,4 +111,4 @@ const Homepage = () => {
     );
 };
 
-export default Homepage;
+export default HomePage;

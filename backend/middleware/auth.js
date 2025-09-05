@@ -22,8 +22,19 @@ exports.protect = async (req, res, next) => {
         
         req.user = await User.findById(decoded.id);
 
+        // Grant access to the next middleware
         next();
-    } catch (err) {
-        return res.status(401).json({ success: false, msg: 'Not authorized to access this route' });
+    } catch (error) {
+        res.status(401).json({ msg: 'Not authorized, token failed' });
     }
+};
+
+// Grant access to specific roles
+exports.authorize = (...roles) => {
+    return (req, res, next) => {
+        if (!roles.includes(req.user.role)) {
+            return res.status(403).json({ msg: `User role '${req.user.role}' is not authorized to access this route` });
+        }
+        next();
+    };
 };

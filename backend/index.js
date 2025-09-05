@@ -9,16 +9,28 @@ dotenv.config();
 // Connect to database
 connectDB();
 
+const authRoutes = require('./routes/auth');
+const restaurantRoutes = require('./routes/restaurants');
+const orderRoutes = require('./routes/orders');
+const adminRoutes = require('./routes/admin');
+const couponRoutes = require('./routes/coupons');
+
 const app = express();
 
 // Middleware
-app.use(cors());
+const corsOptions = {
+    origin: 'http://localhost:3000', // Allow only your frontend to access
+    optionsSuccessStatus: 200
+};
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Mount routers
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/restaurants', require('./routes/restaurants'));
-app.use('/api/orders', require('./routes/orders'));
+app.use('/api/auth', authRoutes);
+app.use('/api/restaurants', restaurantRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/coupons', couponRoutes);
 
 // Basic Route
 app.get('/', (req, res) => {

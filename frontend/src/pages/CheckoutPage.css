@@ -106,3 +106,10 @@
     background-color: #9ca3af;
     cursor: not-allowed;
 }
+
+.coupon-error {
+    color: #ef4444;
+    font-size: 0.875rem;
+    text-align: center;
+    margin-top: 0.75rem;
+}

@@ -70,21 +70,32 @@
     font-weight: 600;
 }
 
+.profile-modal-content {
+    padding: 1rem;
+    text-align: left;
+    color: #1F2937; /* Dark text for light modal */
+}
+
 .profile-modal-content p {
-    margin: 0.5rem 0;
-    font-size: 1.1rem;
-    color: #333;
+    margin: 0;
+    padding: 0.75rem 0; /* Vertical padding for even spacing */
+    border-bottom: 1px solid #E5E7EB; /* Light grey separator */
+}
+
+.profile-modal-content p:last-of-type {
+    border-bottom: none;
 }
 
 .profile-modal-content strong {
-    color: #111;
+    color: #6B7280; /* Muted dark grey for labels */
+    margin-right: 0.5rem;
 }
 
 .view-dashboard-btn {
-    margin-top: 1rem;
+    margin-top: 1.5rem; /* More space above the button */
     width: 100%;
     padding: 0.75rem;
-    background-color: #FF6B35;
+    background-color: #f97316;
     color: white;
     border: none;
     border-radius: 0.5rem;
@@ -95,5 +106,17 @@
 }
 
 .view-dashboard-btn:hover {
-    background-color: #e65c2e;
+    background-color: #ea580c;
+}
+
+/* Mobile Menu Styles */
+.mobile-menu-link {
+    font-size: 1.5rem; /* 24px */
+    font-weight: 600;
+    color: #D1D5DB; /* gray-300 */
+    transition: color 0.2s ease-in-out;
+}
+
+.mobile-menu-link:hover {
+    color: #F97316; /* orange-500 */
 }

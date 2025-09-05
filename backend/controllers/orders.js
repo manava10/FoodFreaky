@@ -4,20 +4,26 @@ const Order = require('../models/Order');
 // @route   POST /api/orders
 // @access  Private
 exports.createOrder = async (req, res) => {
-    const { items, totalPrice } = req.body;
+    try {
+        const { items, totalPrice, shippingAddress } = req.body;
 
-    if (items && items.length === 0) {
-        return res.status(400).json({ msg: 'No order items' });
+        if (items && items.length === 0) {
+            return res.status(400).json({ msg: 'No order items' });
+        }
+
+        const order = new Order({
+            user: req.user.id,
+            items,
+            totalPrice,
+            shippingAddress
+        });
+
+        const createdOrder = await order.save();
+        res.status(201).json(createdOrder);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ msg: 'Server Error' });
     }
-
-    const order = new Order({
-        user: req.user.id,
-        items,
-        totalPrice,
-    });
-
-    const createdOrder = await order.save();
-    res.status(201).json(createdOrder);
 };
 
 // @desc    Get logged in user's orders

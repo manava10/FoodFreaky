@@ -1,0 +1,267 @@
+.admin-page-container {
+    min-height: 100vh;
+    background-image: url('https://images.unsplash.com/photo-1504674900247-0877df9cc836');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    position: relative;
+}
+
+.admin-order-list {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+    .admin-order-list {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1280px) {
+    .admin-order-list {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.admin-order-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 1rem;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.order-details {
+    padding: 1.5rem;
+    flex-grow: 1;
+}
+
+.order-id {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 1rem;
+}
+
+.order-details p {
+    margin-bottom: 0.5rem;
+}
+
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: white;
+}
+
+.status-waiting-for-acceptance { background-color: #f59e0b; }
+.status-accepted { background-color: #84cc16; }
+.status-preparing-food { background-color: #3b82f6; }
+.status-out-for-delivery { background-color: #8b5cf6; }
+.status-delivered { background-color: #10b981; }
+.status-cancelled { background-color: #ef4444; }
+
+.order-items-summary ul {
+    list-style-position: inside;
+    padding-left: 0.5rem;
+}
+
+.order-actions {
+    border-top: 1px solid #e5e7eb;
+    padding: 1rem 1.5rem;
+    background-color: rgba(249, 250, 251, 0.5);
+    border-radius: 0 0 1rem 1rem;
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Super Admin Specific Styles */
+.admin-stat-card, .admin-management-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+}
+
+.stat-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #4b5563;
+    margin-bottom: 0.5rem;
+}
+
+.stat-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.admin-management-card .card-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 1rem;
+}
+
+.manage-btn {
+    margin-top: 1rem;
+    width: 100%;
+    padding: 0.75rem;
+    background-color: #f97316;
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.recent-orders .admin-order-card {
+    grid-template-columns: 1fr; /* Single column for recent orders list */
+}
+
+/* Coupon Manager Styles */
+.coupon-form {
+    margin-top: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.coupon-form input, .coupon-form select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+}
+
+.create-coupon-btn {
+    width: 100%;
+    padding: 0.75rem;
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.error-message {
+    color: #ef4444;
+    margin-top: 0.5rem;
+    text-align: center;
+}
+
+.coupon-list {
+    margin-top: 1.5rem;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.coupon-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f9fafb;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.coupon-code {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.delete-coupon-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #ef4444;
+    cursor: pointer;
+    margin-left: 0.5rem;
+}
+
+.edit-btn {
+    background: none;
+    border: none;
+    font-size: 0.875rem;
+    color: #3b82f6;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.status-select {
+    flex-grow: 1;
+    border: 1px solid #d1d5db;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    background-color: white;
+}
+
+.update-status-btn {
+    background-color: #fb923c;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.update-status-btn:hover {
+    background-color: #f97316;
+}
+
+/* Edit Restaurant Page Styles */
+.admin-management-card.edit-restaurant-form {
+    background: rgba(17, 24, 39, 0.8); /* Darker, more transparent background */
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.admin-form-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background-color: rgba(31, 41, 55, 0.8);
+    border: 1px solid rgba(75, 85, 99, 0.8);
+    border-radius: 0.5rem;
+    color: #f3f4f6;
+    transition: all 0.2s ease-in-out;
+}
+
+.admin-form-input:focus {
+    outline: none;
+    border-color: #f97316;
+    box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.5);
+}
+
+.back-to-admin-btn {
+    display: inline-block;
+    margin-bottom: 2rem;
+    padding: 0.5rem 1rem;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #e5e7eb;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0.5rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.back-to-admin-btn:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}

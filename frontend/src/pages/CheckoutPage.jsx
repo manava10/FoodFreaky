@@ -11,20 +11,40 @@ const CheckoutPage = () => {
     const { user, authToken } = useAuth();
     const navigate = useNavigate();
 
+    const [address, setAddress] = useState('');
+    const [contactNumber] = useState(user?.contactNumber || '');
     const [couponCode, setCouponCode] = useState('');
     const [discount, setDiscount] = useState(0);
+    const [couponError, setCouponError] = useState('');
     const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
-    const handleApplyCoupon = () => {
-        const code = couponCode.toUpperCase();
-        if (code === 'FREAKY50') {
-            setDiscount(cartTotal * 0.5);
-            alert('Coupon applied! 50% discount.');
-        } else if (code === 'MANAV') {
-            setDiscount(cartTotal * 0.1);
-            alert('Coupon applied! 10% discount.');
-        } else {
-            alert('Invalid coupon code.');
+    const handleApplyCoupon = async () => {
+        setCouponError('');
+        setDiscount(0);
+        if (!couponCode) return;
+
+        try {
+            const { data } = await axios.post(`${process.env.REACT_APP_API_URL}/api/coupons/validate`, { code: couponCode });
+            const coupon = data.data;
+
+            let calculatedDiscount = 0;
+            if (coupon.discountType === 'percentage') {
+                calculatedDiscount = cartTotal * (coupon.value / 100);
+            } else {
+                calculatedDiscount = coupon.value;
+            }
+
+            if (calculatedDiscount > cartTotal) {
+                calculatedDiscount = cartTotal;
+            }
+
+            setDiscount(calculatedDiscount);
+            alert(`Coupon '${coupon.code}' applied successfully!`);
+
+        } catch (err) {
+            const errorMsg = err.response?.data?.msg || 'Failed to apply coupon.';
+            setCouponError(errorMsg);
+            alert(errorMsg); // Also show an alert for immediate feedback
         }
     };
     
@@ -33,10 +53,19 @@ const CheckoutPage = () => {
     const finalTotal = subtotal + taxes - discount;
 
     const handlePlaceOrder = async () => {
+        if (!address || !contactNumber) {
+            alert('Please fill in your address and contact number.');
+            return;
+        }
         setIsPlacingOrder(true);
         const order = {
-            items: cartItems,
+            items: cartItems.map(item => ({
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity,
+            })),
             totalPrice: finalTotal,
+            shippingAddress: address,
         };
 
         try {
@@ -46,7 +75,7 @@ const CheckoutPage = () => {
                     Authorization: `Bearer ${authToken}`,
                 },
             };
-            await axios.post('http://localhost:5001/api/orders', order, config);
+            await axios.post(`${process.env.REACT_APP_API_URL}/api/orders`, order, config);
             alert('Order placed successfully!');
             clearCart();
             navigate('/dashboard');
@@ -74,8 +103,18 @@ const CheckoutPage = () => {
                         <div className="detail-card">
                             <h2 className="card-title">Delivery Information</h2>
                             <p><strong>Name:</strong> {user.name}</p>
-                            <p><strong>Email:</strong> {user.email}</p>
-                            <p className="mt-2 text-sm text-gray-500">Address functionality coming soon.</p>
+                            <div>
+                                <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+                                <input type="email" id="email" value={user?.email || ''} readOnly className="mt-1 block w-full p-2 border border-gray-300 rounded-md bg-gray-100" />
+                            </div>
+                            <div>
+                                <label htmlFor="contactNumber" className="block text-sm font-medium text-gray-700">Contact Number</label>
+                                <input type="tel" id="contactNumber" value={contactNumber} readOnly className="mt-1 block w-full p-2 border border-gray-300 rounded-md bg-gray-100" />
+                            </div>
+                            <div>
+                                <label htmlFor="address" className="block text-sm font-medium text-gray-700">Shipping Address</label>
+                                <textarea id="address" rows="3" value={address} onChange={(e) => setAddress(e.target.value)} required className="mt-1 block w-full p-2 border border-gray-300 rounded-md" placeholder="123 Main St, Anytown, USA"></textarea>
+                            </div>
                         </div>
                         <div className="detail-card">
                             <h2 className="card-title">Payment Method</h2>
@@ -104,6 +143,7 @@ const CheckoutPage = () => {
                             />
                             <button onClick={handleApplyCoupon} className="coupon-btn">Apply</button>
                         </div>
+                        {couponError && <p className="coupon-error">{couponError}</p>}
                         <div className="price-details">
                             <div className="price-row">
                                 <span>Subtotal</span>
