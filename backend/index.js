@@ -18,8 +18,13 @@ const couponRoutes = require('./routes/coupons');
 const app = express();
 
 // Middleware
+const allowedOrigins = ['http://localhost:3000', 'https://cheerful-cannoli-94af42.netlify.app'];
+if (process.env.FRONTEND_URL) {
+    allowedOrigins.push(process.env.FRONTEND_URL);
+}
+
 const corsOptions = {
-    origin: 'http://localhost:3000', // Allow only your frontend to access
+    origin: allowedOrigins,
     optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions));
