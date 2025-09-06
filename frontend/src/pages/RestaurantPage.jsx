@@ -15,7 +15,7 @@ function RestaurantPage() {
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
     const [activeCategory, setActiveCategory] = useState('');
     
-    const { addToCart } = useCart();
+    const { addToCart, increaseQuantity, decreaseQuantity, cartItems } = useCart();
     const { isLoggedIn } = useAuth();
     const navigate = useNavigate();
 
@@ -45,12 +45,18 @@ function RestaurantPage() {
         setSelectedRestaurant(null);
     };
 
-    const handleAddToCart = (item) => {
+    const handleAddToCart = (item, restaurant) => {
         if (!isLoggedIn) {
             setIsLoginModalOpen(true);
-        } else {
-            addToCart(item);
+            return;
         }
+        addToCart({ ...item, restaurant: { id: restaurant._id, name: restaurant.name } });
+    };
+
+    // Helper to find the quantity of an item in the cart
+    const getItemQuantity = (itemName) => {
+        const itemInCart = cartItems.find(item => item.name === itemName);
+        return itemInCart ? itemInCart.quantity : 0;
     };
     
     if (loading) {
@@ -145,8 +151,19 @@ function RestaurantPage() {
                                             <h4 className="text-lg font-semibold text-gray-900 mb-2">{item.name}</h4>
                                             <p className="text-gray-600 text-sm mb-3">Delicious and fresh</p>
                                             <div className="flex items-center justify-between">
-                                                <span className="text-xl font-bold text-orange-600">₹{item.price}</span>
-                                                <button onClick={() => handleAddToCart(item)} className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors">Add +</button>
+                                                <span className="font-bold text-lg text-gray-800">₹{item.price}</span>
+                                                
+                                                {getItemQuantity(item.name) === 0 ? (
+                                                    <button onClick={() => handleAddToCart(item, selectedRestaurant)} className="add-to-cart-btn">
+                                                        ADD
+                                                    </button>
+                                                ) : (
+                                                    <div className="quantity-control">
+                                                        <button onClick={() => decreaseQuantity(item.name)} className="quantity-btn">-</button>
+                                                        <span className="quantity-display">{getItemQuantity(item.name)}</span>
+                                                        <button onClick={() => increaseQuantity(item.name)} className="quantity-btn">+</button>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                         <div className="w-20 h-20 bg-gradient-to-br from-white to-gray-100 rounded-lg flex items-center justify-center ml-4">

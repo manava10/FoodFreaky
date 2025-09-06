@@ -44,6 +44,20 @@ export const CartProvider = ({ children }) => {
         });
     };
 
+    const increaseQuantity = (itemName) => {
+        const updatedCart = cartItems.map(item =>
+            item.name === itemName ? { ...item, quantity: item.quantity + 1 } : item
+        );
+        setCartItems(updatedCart);
+    };
+
+    const decreaseQuantity = (itemName) => {
+        const updatedCart = cartItems.map(item =>
+            item.name === itemName ? { ...item, quantity: Math.max(0, item.quantity - 1) } : item
+        ).filter(item => item.quantity > 0); // Remove item if quantity is 0
+        setCartItems(updatedCart);
+    };
+
     const clearCart = () => {
         setCartItems([]);
     };
@@ -64,7 +78,9 @@ export const CartProvider = ({ children }) => {
             cartTotal,
             isCartOpen,
             openCart,
-            closeCart
+            closeCart,
+            increaseQuantity,
+            decreaseQuantity
         }}>
             {children}
         </CartContext.Provider>

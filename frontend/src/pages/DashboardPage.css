@@ -121,8 +121,24 @@
 }
 
 .cancel-order-btn:hover {
-    background-color: #ef4444;
-    color: white;
+    background-color: #EF4444; /* Red-500 */
+    border-color: #EF4444;
+}
+
+.download-invoice-btn {
+    background-color: transparent;
+    border: 1px solid #3B82F6; /* Blue-500 */
+    color: #3B82F6;
+    padding: 8px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    font-size: 0.875rem;
+}
+
+.download-invoice-btn:hover {
+    background-color: #3B82F6;
+    color: #fff;
 }
 
 .order-details {
@@ -146,4 +162,8 @@
     font-weight: bold;
     padding-top: 0.75rem;
     font-size: 1.1rem;
+}
+
+.order-details-modal {
+    color: #333;
 }

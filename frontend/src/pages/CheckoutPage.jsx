@@ -50,7 +50,8 @@ const CheckoutPage = () => {
     
     const subtotal = cartTotal;
     const taxes = subtotal * 0.1; // Dummy 10% tax
-    const finalTotal = subtotal + taxes - discount;
+    const shipping = 50; // Dummy 50 shipping
+    const finalTotal = subtotal + taxes + shipping - discount;
 
     const handlePlaceOrder = async () => {
         if (!address || !contactNumber) {
@@ -58,14 +59,18 @@ const CheckoutPage = () => {
             return;
         }
         setIsPlacingOrder(true);
-        const order = {
+        const orderData = {
             items: cartItems.map(item => ({
                 name: item.name,
                 price: item.price,
                 quantity: item.quantity,
             })),
-            totalPrice: finalTotal,
             shippingAddress: address,
+            itemsPrice: subtotal,
+            taxPrice: taxes,
+            shippingPrice: shipping,
+            totalPrice: finalTotal,
+            couponUsed: discount > 0 ? couponCode : null
         };
 
         try {
@@ -75,7 +80,7 @@ const CheckoutPage = () => {
                     Authorization: `Bearer ${authToken}`,
                 },
             };
-            await axios.post(`${process.env.REACT_APP_API_URL}/api/orders`, order, config);
+            await axios.post(`${process.env.REACT_APP_API_URL}/api/orders`, orderData, config);
             alert('Order placed successfully!');
             clearCart();
             navigate('/dashboard');

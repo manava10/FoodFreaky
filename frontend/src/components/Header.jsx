@@ -57,9 +57,10 @@ const Header = () => {
                         </button>
                         {isLoggedIn ? (
                             <>
+                                <button onClick={() => navigate('/dashboard')} className="header-btn-primary primary">Dashboard</button>
                                 <button onClick={handleLogout} className="header-btn-primary destructive">Logout</button>
-                                <button className="header-btn-icon user-profile-circle" onClick={toggleProfileModal}>
-                                    <span>{user ? user.name.charAt(0) : 'U'}</span>
+                                <button onClick={toggleProfileModal} className="header-btn-icon user-profile-circle">
+                                    {user && user.name ? user.name.charAt(0).toUpperCase() : '?'}
                                 </button>
                                 <button onClick={openCart} className="header-btn-icon cart-btn">
                                     🛒

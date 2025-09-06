@@ -9,13 +9,32 @@ const orderSchema = new mongoose.Schema({
     items: [
         {
             name: { type: String, required: true },
-            quantity: { type:Number, required: true },
-            price: { type: Number, required: true },
-        },
+            quantity: { type: Number, required: true },
+            price: { type: Number, required: true }
+        }
     ],
+    itemsPrice: {
+        type: Number,
+        required: true,
+        default: 0.0
+    },
+    taxPrice: {
+        type: Number,
+        required: true,
+        default: 0.0
+    },
+    shippingPrice: {
+        type: Number,
+        required: true,
+        default: 0.0
+    },
     totalPrice: {
         type: Number,
         required: true,
+        default: 0.0
+    },
+    couponUsed: {
+        type: String,
     },
     shippingAddress: {
         type: String,

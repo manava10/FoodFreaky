@@ -72,3 +72,52 @@ body { font-family: 'Inter', sans-serif; }
 .order-card.delivered .order-status span {
     background-color: #22c55e;
 }
+
+/* Add to Cart Button Styles */
+.add-to-cart-btn {
+    background-color: #F97316; /* Orange-500 */
+    color: white;
+    padding: 0.5rem 1.5rem;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: bold;
+    transition: background-color 0.2s ease-in-out;
+    letter-spacing: 0.05em;
+}
+
+.add-to-cart-btn:hover {
+    background-color: #EA580C; /* Darker orange */
+}
+
+/* Quantity Control Styles */
+.quantity-control {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100px;
+    border: 1px solid #F97316;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.quantity-btn {
+    background-color: transparent;
+    border: none;
+    color: #F97316;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 0.25rem 0.75rem;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.quantity-btn:hover {
+    background-color: #FFF7ED; /* Very light orange */
+}
+
+.quantity-display {
+    font-weight: bold;
+    color: #333;
+}
