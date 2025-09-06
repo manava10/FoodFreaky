@@ -48,6 +48,7 @@ const OrderManager = ({ orders, setOrders, loading }) => {
                             <h2 className="order-id">Order #{order._id.substring(0, 8)}</h2>
                             <p><strong>User:</strong> {order.user.name} ({order.user.email})</p>
                             {order.user.contactNumber && <p><strong>Phone:</strong> {order.user.contactNumber}</p>}
+                            <p><strong>Address:</strong> {order.shippingAddress}</p>
                             <p><strong>Total:</strong> ₹{order.totalPrice.toFixed(2)}</p>
                             <p><strong>Status:</strong> <span className={`status-badge status-${order.status.toLowerCase().replace(/\s+/g, '-')}`}>{order.status}</span></p>
                             <p><strong>Date:</strong> {new Date(order.createdAt).toLocaleString()}</p>

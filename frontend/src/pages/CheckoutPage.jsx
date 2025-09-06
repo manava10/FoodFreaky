@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -12,11 +12,17 @@ const CheckoutPage = () => {
     const navigate = useNavigate();
 
     const [address, setAddress] = useState('');
-    const [contactNumber] = useState(user?.contactNumber || '');
+    const [contactNumber, setContactNumber] = useState('');
     const [couponCode, setCouponCode] = useState('');
     const [discount, setDiscount] = useState(0);
     const [couponError, setCouponError] = useState('');
     const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+
+    useEffect(() => {
+        if (user && user.contactNumber) {
+            setContactNumber(user.contactNumber);
+        }
+    }, [user]);
 
     const handleApplyCoupon = async () => {
         setCouponError('');
@@ -114,7 +120,7 @@ const CheckoutPage = () => {
                             </div>
                             <div>
                                 <label htmlFor="contactNumber" className="block text-sm font-medium text-gray-700">Contact Number</label>
-                                <input type="tel" id="contactNumber" value={contactNumber} readOnly className="mt-1 block w-full p-2 border border-gray-300 rounded-md bg-gray-100" />
+                                <input type="tel" id="contactNumber" value={contactNumber} onChange={(e) => setContactNumber(e.target.value)} required className="mt-1 block w-full p-2 border border-gray-300 rounded-md" />
                             </div>
                             <div>
                                 <label htmlFor="address" className="block text-sm font-medium text-gray-700">Shipping Address</label>

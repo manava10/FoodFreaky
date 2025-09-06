@@ -1,10 +1,11 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const CartContext = createContext();
 
 export const useCart = () => useContext(CartContext);
 
-export const CartProvider = ({ children }) => {
+const CartProviderContent = ({ children }) => {
     const [cartItems, setCartItems] = useState(() => {
         try {
             const localData = localStorage.getItem('cartItems');
@@ -15,22 +16,52 @@ export const CartProvider = ({ children }) => {
         }
     });
     const [isCartOpen, setIsCartOpen] = useState(false);
+    const [clearCartConfirmation, setClearCartConfirmation] = useState({
+        isOpen: false,
+        item: null,
+        restaurant: null,
+    });
+    const navigate = useNavigate();
 
     useEffect(() => {
         localStorage.setItem('cartItems', JSON.stringify(cartItems));
     }, [cartItems]);
 
-    const addToCart = (item) => {
+    const addToCart = (item, restaurant) => {
+        const isNewRestaurant = cartItems.length > 0 && cartItems[0].restaurant.id !== restaurant.id;
+
+        if (isNewRestaurant) {
+            setClearCartConfirmation({ isOpen: true, item, restaurant });
+            return;
+        }
+
+        const exist = cartItems.find(x => x.name === item.name);
+
         setCartItems(prevItems => {
-            const exist = prevItems.find(x => x.name === item.name);
             if (exist) {
                 return prevItems.map(x =>
                     x.name === item.name ? { ...exist, quantity: exist.quantity + 1 } : x
                 );
             } else {
-                return [...prevItems, { ...item, quantity: 1 }];
+                return [...prevItems, { ...item, quantity: 1, restaurant: { id: restaurant.id, name: restaurant.name } }];
             }
         });
+    };
+
+    const handleConfirmClearCart = () => {
+        const { item, restaurant } = clearCartConfirmation;
+        setCartItems([{ ...item, quantity: 1, restaurant: { id: restaurant.id, name: restaurant.name } }]);
+        setClearCartConfirmation({ isOpen: false, item: null, restaurant: null });
+    };
+
+    const handleCancelClearCart = () => {
+        setClearCartConfirmation({ isOpen: false, item: null, restaurant: null });
+    };
+
+    const handleGoToCheckout = () => {
+        setClearCartConfirmation({ isOpen: false, item: null, restaurant: null });
+        closeCart();
+        navigate('/checkout');
     };
 
     const updateQuantity = (name, quantity) => {
@@ -54,7 +85,7 @@ export const CartProvider = ({ children }) => {
     const decreaseQuantity = (itemName) => {
         const updatedCart = cartItems.map(item =>
             item.name === itemName ? { ...item, quantity: Math.max(0, item.quantity - 1) } : item
-        ).filter(item => item.quantity > 0); // Remove item if quantity is 0
+        ).filter(item => item.quantity > 0);
         setCartItems(updatedCart);
     };
 
@@ -83,6 +114,39 @@ export const CartProvider = ({ children }) => {
             decreaseQuantity
         }}>
             {children}
+            {clearCartConfirmation.isOpen && (
+                <div className="modal-overlay">
+                    <div className="modal-content confirmation-modal">
+                        <h3>Start a New Order?</h3>
+                        <p>
+                            Your cart contains items from <strong>{cartItems[0].restaurant.name}</strong>.
+                            You can only order from one restaurant at a time.
+                        </p>
+                        <p>
+                            Would you like to clear your cart to add this item from <strong>{clearCartConfirmation.restaurant.name}</strong>?
+                        </p>
+                        <div className="modal-actions">
+                            <button onClick={handleGoToCheckout} className="checkout-confirm-btn">
+                                Go to Checkout
+                            </button>
+                            <button onClick={handleConfirmClearCart} className="clear-cart-confirm-btn">
+                                Clear Cart & Add
+                            </button>
+                            <button onClick={handleCancelClearCart} className="cancel-confirm-btn">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </CartContext.Provider>
+    );
+};
+
+export const CartProvider = ({ children }) => {
+    return (
+        <CartProviderContent>
+            {children}
+        </CartProviderContent>
     );
 };

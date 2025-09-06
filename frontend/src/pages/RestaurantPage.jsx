@@ -50,7 +50,7 @@ function RestaurantPage() {
             setIsLoginModalOpen(true);
             return;
         }
-        addToCart({ ...item, restaurant: { id: restaurant._id, name: restaurant.name } });
+        addToCart(item, { id: restaurant._id, name: restaurant.name });
     };
 
     // Helper to find the quantity of an item in the cart

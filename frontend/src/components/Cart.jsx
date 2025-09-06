@@ -25,19 +25,25 @@ const Cart = () => {
                     {cartItems.length === 0 ? (
                         <p className="empty-cart-message">Your cart is empty.</p>
                     ) : (
-                        cartItems.map(item => (
-                            <div key={item.name} className="cart-item">
-                                <div className="cart-item-info">
-                                    <p className="item-name">{item.name}</p>
-                                    <p className="item-price">₹{item.price.toFixed(2)}</p>
-                                </div>
-                                <div className="cart-item-controls">
-                                    <button onClick={() => updateQuantity(item.name, item.quantity - 1)}>-</button>
-                                    <span>{item.quantity}</span>
-                                    <button onClick={() => updateQuantity(item.name, item.quantity + 1)}>+</button>
-                                </div>
+                        <>
+                            <div className="cart-restaurant-header">
+                                <h3>Ordering from:</h3>
+                                <p>{cartItems[0].restaurant.name}</p>
                             </div>
-                        ))
+                            {cartItems.map(item => (
+                                <div key={item.name} className="cart-item">
+                                    <div className="cart-item-info">
+                                        <p className="item-name">{item.name}</p>
+                                        <p className="item-price">₹{item.price.toFixed(2)}</p>
+                                    </div>
+                                    <div className="cart-item-controls">
+                                        <button onClick={() => updateQuantity(item.name, item.quantity - 1)}>-</button>
+                                        <span>{item.quantity}</span>
+                                        <button onClick={() => updateQuantity(item.name, item.quantity + 1)}>+</button>
+                                    </div>
+                                </div>
+                            ))}
+                        </>
                     )}
                 </div>
                 <div className="cart-footer">

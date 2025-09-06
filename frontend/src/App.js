@@ -17,7 +17,7 @@ import Cart from './components/Cart';
 
 function App() {
   return (
-    <Router>
+    <>
       <Cart />
       <Routes>
         <Route path="/" element={<HomePage />} />
@@ -67,7 +67,7 @@ function App() {
           } 
         />
       </Routes>
-    </Router>
+    </>
   );
 }
 

@@ -1,6 +1,4 @@
 .dashboard-container {
-    padding: 2rem;
-    background-color: #f9fafb;
     min-height: 100vh;
 }
 
@@ -93,14 +91,16 @@
 }
 
 .order-card {
+    background-color: #1f2937; /* Darker card background */
+    padding: 1rem;
     border-radius: 0.75rem;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     transition: all 0.3s;
-    border-left: 5px solid;
+    background: linear-gradient(to right, #f97316, #ef4444); /* Orange to Red gradient */
 }
 
 .order-card:hover { 
-    transform: translateY(-2px); 
+    transform: translateY(-5px); 
     transition: all 0.3s ease; 
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
@@ -109,9 +109,21 @@
 .status-cancelled { background: linear-gradient(135deg, #ef4444, #dc2626); }
 
 .cancel-order-btn {
-    background-color: #fee2e2;
-    color: #ef4444;
-    border: 1px solid #fecaca;
+    background-color: white;
+    color: black;
+    border: 1px solid #ddd;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.download-invoice-btn {
+    background: linear-gradient(to right, #f97316, #ef4444);
+    color: white;
+    border: none;
     padding: 0.5rem 1rem;
     border-radius: 0.5rem;
     font-weight: 600;
@@ -121,24 +133,11 @@
 }
 
 .cancel-order-btn:hover {
-    background-color: #EF4444; /* Red-500 */
-    border-color: #EF4444;
-}
-
-.download-invoice-btn {
-    background-color: transparent;
-    border: 1px solid #3B82F6; /* Blue-500 */
-    color: #3B82F6;
-    padding: 8px 16px;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: all 0.2s ease-in-out;
-    font-size: 0.875rem;
+    background-color: #f0f0f0;
 }
 
 .download-invoice-btn:hover {
-    background-color: #3B82F6;
-    color: #fff;
+    opacity: 0.9;
 }
 
 .order-details {

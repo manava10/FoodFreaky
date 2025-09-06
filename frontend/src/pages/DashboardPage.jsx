@@ -104,73 +104,104 @@ const DashboardPage = () => {
     };
 
     return (
-        <div className="dashboard-container">
-            <Header />
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Welcome Banner */}
-                <div className="dashboard-welcome-banner">
-                    <div>
-                        <h1 className="text-2xl md:text-4xl font-bold text-white">Welcome back, {user?.name}!</h1>
-                        <p className="text-sm md:text-base text-gray-300 mt-2">You have {orders.length} recent orders. Total spent: <span className="font-bold text-white">₹{totalSpent.toFixed(2)}</span></p>
-                    </div>
+        <div className="min-h-screen relative">
+            {/* Food Background */}
+            <div 
+                className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                style={{
+                    backgroundImage: `url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80')`
+                }}
+            >
+                {/* Animated floating elements */}
+                <div className="absolute inset-0 overflow-hidden">
+                    <div className="floating-element absolute top-20 left-10 text-3xl opacity-20">🍕</div>
+                    <div className="floating-element-slow absolute top-40 right-20 text-2xl opacity-15">🍔</div>
+                    <div className="floating-element absolute bottom-32 left-1/4 text-3xl opacity-15">🍜</div>
+                    <div className="floating-element-slow absolute top-1/3 right-1/4 text-2xl opacity-20">🌮</div>
+                    <div className="floating-element absolute bottom-20 right-1/3 text-2xl opacity-15">🍰</div>
                 </div>
+                
+                {/* Dark overlay for readability */}
+                <div className="absolute inset-0 bg-black bg-opacity-70"></div>
+            </div>
+            
+            <Header />
+
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+                {loading ? (
+                    <p className="text-white text-center">Loading dashboard...</p>
+                ) : user && (
+                    <>
+                        {/* Welcome Section */}
+                        <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl p-8 mb-8 text-white shadow-lg">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h2 className="text-3xl font-bold mb-2">Welcome back, {user.name.split(' ')[0]}! 👋</h2>
+                                    <p className="text-orange-100 text-lg">Ready for your next delicious meal?</p>
+                                    <div className="mt-4 flex items-center space-x-2 md:space-x-6">
+                                        <div className="bg-white/20 rounded-lg p-3 text-center">
+                                            <div className="text-2xl font-bold">{orders.length}</div>
+                                            <div className="text-sm text-orange-100">Total Orders</div>
+                                        </div>
+                                        <div className="bg-white/20 rounded-lg p-3 text-center">
+                                            <div className="text-2xl font-bold">₹{totalSpent.toFixed(2)}</div>
+                                            <div className="text-sm text-orange-100">Total Spent</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="hidden md:block">
+                                    <div className="w-32 h-32 bg-white/20 rounded-full flex items-center justify-center">
+                                        <span className="text-6xl">🍕</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
                 {/* Quick Actions */}
                 <div className="quick-action-buttons">
-                    <button onClick={() => navigate('/restaurant')} className="quick-action-btn">
-                        <span>🍽️</span> Order New Food
-                    </button>
-                    <button onClick={() => navigate('/')} className="quick-action-btn">
-                        <span>🏠</span> Back to Home
-                    </button>
                 </div>
 
                 {/* Recent Orders */}
                 <div className="recent-orders-section">
                     <h2 className="text-xl md:text-2xl font-bold text-white mb-4">Recent Orders</h2>
-                    <div className="order-list grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="flex flex-col gap-6">
                         {orders.map(order => (
-                            <div key={order._id} className="order-card">
+                            <div key={order._id} className="order-card p-4 rounded-lg shadow-md">
                                 <div className="flex justify-between items-start">
                                     <div>
-                                        <h4 className="font-semibold text-gray-900" onClick={() => viewOrderDetails(order)}>Order #{order._id.substring(0, 8)}</h4>
-                                        <p className="text-gray-600 text-sm" onClick={() => viewOrderDetails(order)}>{order.items.map(i => i.name).slice(0, 2).join(', ')}</p>
-                                        <p className="text-gray-400 text-sm">{new Date(order.createdAt).toLocaleDateString()}</p>
-                                        <div className="mt-2">
-                                            <p className="text-gray-400 text-sm">ORDER ID: #{order._id}</p>
-                                        </div>
+                                        <h4 className="font-semibold text-black" onClick={() => viewOrderDetails(order)}>Order #{order._id.substring(0, 8)}</h4>
+                                        <p className="text-gray-800 text-sm" onClick={() => viewOrderDetails(order)}>{order.items.map(i => i.name).slice(0, 2).join(', ')}</p>
+                                        <p className="text-gray-700 text-sm">{new Date(order.createdAt).toLocaleString()}</p>
                                     </div>
                                     <div className="text-right flex-shrink-0 ml-4">
-                                        <p className="text-lg font-semibold text-white">₹{order.totalPrice.toFixed(2)}</p>
+                                        <p className="text-lg font-semibold text-black">₹{order.totalPrice.toFixed(2)}</p>
                                         <span className={`status-badge ${getStatusClass(order.status)}`}>{order.status}</span>
                                     </div>
                                 </div>
-                                <div className="order-actions">
+                                <div className="order-actions mt-4 pt-4 border-t border-white/20 flex justify-end">
                                             {order.status === 'Waiting for Acceptance' && (
-                                                <div className="mt-4 pt-4 border-t border-gray-200 text-right">
                                                     <button 
                                                         className="cancel-order-btn"
                                                         onClick={() => handleCancelOrder(order._id)}
                                                     >
                                                         Cancel Order
                                                     </button>
-                                                </div>
                                             )}
                                             {order.status === 'Delivered' && (
-                                                <div className="mt-4 pt-4 border-t border-gray-200 text-right">
                                                     <button 
                                                         className="download-invoice-btn"
                                                         onClick={() => handleDownloadInvoice(order._id)}
                                                     >
                                                         Download Bill
                                                     </button>
-                                                </div>
                                             )}
                                 </div>
                             </div>
                         ))}
                     </div>
                 </div>
+            </>
+            )}
             </main>
             
             <Modal show={!!selectedOrder} onClose={closeOrderDetails} title={`Order Details #${selectedOrder?._id.substring(0, 8)}`}>
