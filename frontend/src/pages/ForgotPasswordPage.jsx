@@ -8,17 +8,21 @@ const ForgotPasswordPage = () => {
     const [email, setEmail] = useState('');
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
+    const [isSending, setIsSending] = useState(false);
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
         setMessage('');
+        setIsSending(true);
         try {
             const { data } = await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/forgotpassword`, { email });
             setMessage(data.data);
         } catch (err) {
             setError(err.response?.data?.msg || 'Failed to send email');
+        } finally {
+            setIsSending(false);
         }
     };
 
@@ -60,8 +64,8 @@ const ForgotPasswordPage = () => {
                                 />
                             </div>
 
-                            <button type="submit" className="auth-submit-btn">
-                                Send Reset Link
+                            <button type="submit" className="auth-submit-btn" disabled={isSending}>
+                                {isSending ? 'Sending Email, Please Wait...' : 'Send Reset Link'}
                             </button>
                              <div className="text-center">
                                  <p className="text-gray-600 font-light text-sm">

@@ -1,15 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import './HomePages.css'; // move all CSS here (optional if using Tailwind)
 
 const HomePage = () => {
-    const [isMenuOpen] = useState(false);
     const navigate = useNavigate();
-
-    const handleButtonClick = (path) => {
-        navigate(path);
-    };
 
     const handleNavClick = (section) => {
         switch (section) {

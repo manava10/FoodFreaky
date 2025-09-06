@@ -4,14 +4,12 @@ import Modal from '../components/Modal';
 import { useAuth } from '../context/AuthContext';
 import Header from '../components/Header';
 import './DashboardPage.css';
-import { useNavigate } from 'react-router-dom';
 
 const DashboardPage = () => {
     const { user, authToken } = useAuth();
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedOrder, setSelectedOrder] = useState(null);
-    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchOrders = async () => {
