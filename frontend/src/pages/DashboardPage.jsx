@@ -167,16 +167,16 @@ const DashboardPage = () => {
                             <div key={order._id} className="order-card p-4 rounded-lg shadow-md">
                                 <div className="flex justify-between items-start">
                                     <div>
-                                        <h4 className="font-semibold text-black" onClick={() => viewOrderDetails(order)}>Order #{order._id.substring(0, 8)}</h4>
-                                        <p className="text-gray-800 text-sm" onClick={() => viewOrderDetails(order)}>{order.items.map(i => i.name).slice(0, 2).join(', ')}</p>
-                                        <p className="text-gray-700 text-sm">{new Date(order.createdAt).toLocaleString()}</p>
+                                        <h4 className="font-semibold text-gray-900" onClick={() => viewOrderDetails(order)}>Order #{order._id.substring(0, 8)}</h4>
+                                        <p className="text-gray-600 text-sm" onClick={() => viewOrderDetails(order)}>{order.items.map(i => i.name).slice(0, 2).join(', ')}</p>
+                                        <p className="text-gray-500 text-sm">{new Date(order.createdAt).toLocaleString()}</p>
                                     </div>
                                     <div className="text-right flex-shrink-0 ml-4">
-                                        <p className="text-lg font-semibold text-black">₹{order.totalPrice.toFixed(2)}</p>
+                                        <p className="text-lg font-semibold text-gray-900">₹{order.totalPrice.toFixed(2)}</p>
                                         <span className={`status-badge ${getStatusClass(order.status)}`}>{order.status}</span>
                                     </div>
                                 </div>
-                                <div className="order-actions mt-4 pt-4 border-t border-white/20 flex justify-end">
+                                <div className="order-actions mt-4 pt-4 border-t border-gray-200 flex justify-end">
                                             {order.status === 'Waiting for Acceptance' && (
                                                     <button 
                                                         className="cancel-order-btn"

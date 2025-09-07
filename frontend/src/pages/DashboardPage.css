@@ -91,12 +91,11 @@
 }
 
 .order-card {
-    background-color: #1f2937; /* Darker card background */
     padding: 1rem;
     border-radius: 0.75rem;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     transition: all 0.3s;
-    background: linear-gradient(to right, #f97316, #ef4444); /* Orange to Red gradient */
+    background-color: #ffffff; /* Change background to white */
 }
 
 .order-card:hover { 

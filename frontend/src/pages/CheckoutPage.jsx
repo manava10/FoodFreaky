@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Header from '../components/Header';
+import SuccessModal from '../components/SuccessModal';
 import './CheckoutPage.css';
 
 const CheckoutPage = () => {
@@ -17,6 +18,8 @@ const CheckoutPage = () => {
     const [discount, setDiscount] = useState(0);
     const [couponError, setCouponError] = useState('');
     const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+    const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+    const [couponSuccess, setCouponSuccess] = useState(false);
 
     useEffect(() => {
         if (user && user.contactNumber) {
@@ -45,7 +48,7 @@ const CheckoutPage = () => {
             }
 
             setDiscount(calculatedDiscount);
-            alert(`Coupon '${coupon.code}' applied successfully!`);
+            setCouponSuccess(true); // Open success modal
 
         } catch (err) {
             const errorMsg = err.response?.data?.msg || 'Failed to apply coupon.';
@@ -87,9 +90,10 @@ const CheckoutPage = () => {
                 },
             };
             await axios.post(`${process.env.REACT_APP_API_URL}/api/orders`, orderData, config);
-            alert('Order placed successfully!');
-            clearCart();
-            navigate('/dashboard');
+            
+            // Show custom success modal instead of alert
+            setIsSuccessModalOpen(true);
+
         } catch (error) {
             console.error('Order placement error:', error);
             alert('Failed to place order.');
@@ -185,6 +189,26 @@ const CheckoutPage = () => {
                     </div>
                 </div>
             </main>
+
+            <SuccessModal
+                show={isSuccessModalOpen}
+                title="Order Placed!"
+                message="Your order has been placed successfully. You can view its status on your dashboard."
+                buttonText="Go to Dashboard"
+                onButtonClick={() => {
+                    setIsSuccessModalOpen(false);
+                    clearCart();
+                    navigate('/dashboard');
+                }}
+            />
+
+            <SuccessModal
+                show={couponSuccess}
+                title="Coupon Applied!"
+                message={`The coupon '${couponCode}' was applied successfully.`}
+                buttonText="Awesome!"
+                onButtonClick={() => setCouponSuccess(false)}
+            />
         </div>
     );
 };
