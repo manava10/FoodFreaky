@@ -18,7 +18,7 @@ const couponRoutes = require('./routes/coupons');
 const app = express();
 
 // Middleware
-const allowedOrigins = ['http://localhost:3000', 'https://cheerful-cannoli-94af42.netlify.app'];
+const allowedOrigins = ['http://localhost:3000', 'https://cheerful-cannoli-94af42.netlify.app', 'https://foodfreaky.in', 'https://www.foodfreaky.in'];
 if (process.env.FRONTEND_URL) {
     allowedOrigins.push(process.env.FRONTEND_URL);
 }
