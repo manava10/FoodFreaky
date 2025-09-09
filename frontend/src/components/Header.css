@@ -49,9 +49,16 @@
 
 .cart-btn {
     position: relative;
-    background: #FF6B35;
-    border: none;
+    background: #fff;
+    border: 1px solid #e5e7eb;
     font-size: 1.2rem;
+    color: #FF6B35;
+}
+
+.cart-btn svg {
+    stroke: #FF6B35;
+    width: 1.5rem;
+    height: 1.5rem;
 }
 
 .cart-count {
