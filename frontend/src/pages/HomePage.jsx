@@ -50,7 +50,7 @@ const HomePage = () => {
             {/* Promotional Banner */}
             <div className="absolute top-20 left-0 right-0 z-10 bg-orange-100 text-center py-2 px-4 shadow-md">
                 <p className="text-sm text-orange-800">
-                    Want to add your restaurant? Email us at <a href="mailto:noreplyfoodfreaky@gmail.com" className="font-bold underline hover:text-orange-600">noreplyfoodfreaky@gmail.com</a>!
+                    Want to add your restaurant? Email us at <a href="mailto:support@foodfreaky.in" className="font-bold underline hover:text-orange-600">support@foodfreaky.in</a>!
                 </p>
             </div>
 
