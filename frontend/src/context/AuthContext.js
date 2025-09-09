@@ -12,37 +12,54 @@ export const AuthProvider = ({ children }) => {
     const [authToken, setAuthToken] = useState(localStorage.getItem('authToken'));
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [isLoggedIn, setIsLoggedIn] = useState(!!authToken);
-
-    const fetchUser = useCallback(() => {
-        if (authToken) {
-            try {
-                const decoded = jwtDecode(authToken);
-                // Ensure the user state is set with all available info from the token
-                setUser({
-                    id: decoded.id,
-                    name: decoded.name,
-                    email: decoded.email,
-                    role: decoded.role,
-                    contactNumber: decoded.contactNumber, // Make sure to get it from the token
-                    createdAt: decoded.createdAt
-                });
-                setIsLoggedIn(true);
-            } catch (error) {
-                console.error("Invalid token", error);
-                // Token is invalid or expired
-                localStorage.removeItem('authToken');
-                setAuthToken(null);
-                setUser(null);
-                setIsLoggedIn(false);
-            }
-        }
-        setLoading(false);
-    }, [authToken]);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
 
     useEffect(() => {
-        fetchUser();
-    }, [fetchUser]);
+        const token = localStorage.getItem('authToken');
+        if (token) {
+            try {
+                const decoded = jwtDecode(token);
+                // Check if token is expired
+                if (decoded.exp * 1000 < Date.now()) {
+                    logout();
+                } else {
+                    setUser(decoded);
+                    setIsLoggedIn(true);
+                }
+            } catch (error) {
+                console.error("Invalid token", error);
+                logout(); // Clear invalid token
+            }
+        }
+    }, []);
+
+    useEffect(() => {
+        let inactivityTimer;
+
+        const resetTimer = () => {
+            clearTimeout(inactivityTimer);
+            inactivityTimer = setTimeout(() => {
+                // If user is inactive for 5 minutes, log them out
+                if (isLoggedIn) {
+                    logout();
+                    alert("You have been logged out due to inactivity.");
+                }
+            }, 5 * 60 * 1000); // 5 minutes
+        };
+
+        // Events that reset the timer
+        const events = ['mousemove', 'keydown', 'click', 'scroll'];
+        events.forEach(event => window.addEventListener(event, resetTimer));
+
+        resetTimer(); // Initial timer setup
+
+        // Cleanup function
+        return () => {
+            clearTimeout(inactivityTimer);
+            events.forEach(event => window.removeEventListener(event, resetTimer));
+        };
+    }, [isLoggedIn]); // Rerun effect if login state changes
+
 
     const login = async (email, password) => {
         try {
