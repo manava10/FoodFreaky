@@ -20,6 +20,7 @@ const RegisterPage = () => {
     const [message, setMessage] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
     const { isLoggedIn } = useAuth();
     const navigate = useNavigate();
 
@@ -40,6 +41,7 @@ const RegisterPage = () => {
         if (formData.password !== formData.confirmPassword) {
             return setError("Passwords do not match");
         }
+        setIsLoading(true);
         try {
             const { firstName, lastName, email, password, contactNumber } = formData;
             const name = `${firstName} ${lastName}`;
@@ -48,6 +50,8 @@ const RegisterPage = () => {
             setIsOtpStep(true);
         } catch (err) {
             setError(err.response?.data?.msg || 'Registration failed');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -55,6 +59,7 @@ const RegisterPage = () => {
         e.preventDefault();
         setError('');
         setMessage('');
+        setIsLoading(true);
         try {
             const { data } = await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/verify-otp`, { email: formData.email, otp });
             
@@ -63,6 +68,8 @@ const RegisterPage = () => {
 
         } catch (err) {
             setError(err.response?.data?.msg || 'OTP verification failed');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -146,8 +153,8 @@ const RegisterPage = () => {
                                     </div>
                                 </div>
                                 
-                                <button type="submit" className="auth-submit-btn">
-                                    Register 🚀
+                                <button type="submit" className="auth-submit-btn" disabled={isLoading}>
+                                    {isLoading ? 'Sending OTP...' : 'Register 🚀'}
                                 </button>
 
                                 <div className="text-center">
@@ -176,8 +183,8 @@ const RegisterPage = () => {
                                     <input type="text" name="otp" placeholder="Enter 6-digit OTP" value={otp} onChange={(e) => setOtp(e.target.value)} className="auth-input text-center tracking-[1em]" maxLength="6" required />
                                 </div>
 
-                                <button type="submit" className="auth-submit-btn">
-                                    Verify & Create Account
+                                <button type="submit" className="auth-submit-btn" disabled={isLoading}>
+                                    {isLoading ? 'Verifying...' : 'Verify & Create Account'}
                                 </button>
                                  <div className="text-center">
                                      <p className="text-gray-600 font-light text-sm">
