@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 
@@ -9,7 +9,7 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-    const [authToken, setAuthToken] = useState(() => localStorage.getItem('authToken'));
+    const [authToken, setAuthToken] = useState(localStorage.getItem('authToken'));
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isLoggedIn, setIsLoggedIn] = useState(false);

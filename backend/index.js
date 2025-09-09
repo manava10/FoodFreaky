@@ -18,13 +18,26 @@ const couponRoutes = require('./routes/coupons');
 const app = express();
 
 // Middleware
-const allowedOrigins = ['http://localhost:3000', 'https://cheerful-cannoli-94af42.netlify.app', 'https://foodfreaky.in', 'https://www.foodfreaky.in'];
+const allowedOrigins = [
+    'http://localhost:3000',
+    'https://cheerful-cannoli-94af42.netlify.app',
+    'https://foodfreaky.in',
+    'https://www.foodfreaky.in'
+];
 if (process.env.FRONTEND_URL) {
     allowedOrigins.push(process.env.FRONTEND_URL);
 }
 
 const corsOptions = {
-    origin: allowedOrigins,
+    origin: function (origin, callback) {
+        // allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.indexOf(origin) === -1) {
+            const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+            return callback(new Error(msg), false);
+        }
+        return callback(null, true);
+    },
     optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions));
