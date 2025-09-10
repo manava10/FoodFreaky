@@ -65,7 +65,7 @@ const HomePage = () => {
                     </p>
                     <button
                         onClick={() => navigate('/restaurants')}
-                        className="bg-orange-500 hover:bg-orange-600 text-white px-12 py-4 rounded-full text-xl font-bold transition-all duration-300 transform hover:scale-105 shadow-2xl"
+                        className="bg-orange-500 hover:bg-orange-600 text-white px-10 py-3 rounded-full text-lg font-bold transition-all duration-300 transform hover:scale-105 shadow-2xl"
                     >
                         Order Now 🚀
                     </button>
@@ -73,7 +73,7 @@ const HomePage = () => {
             </main>
 
             {/* Footer */}
-            <footer className="relative z-10 bg-black bg-opacity-60 text-white py-8">
+            <footer className="relative z-10 bg-black bg-opacity-60 text-white py-0">
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="flex flex-col md:flex-row items-center justify-between">
                         <div className="mb-4 md:mb-0">
@@ -102,7 +102,7 @@ const HomePage = () => {
                         </div>
                     </div>
 
-                    <div className="border-t border-gray-600 mt-6 pt-6 text-center">
+                    <div className="border-t border-gray-600 mt-3 pt-3 text-center">
                         <p className="text-gray-400">
                             © 2025 FoodFreaky. All rights reserved. | Made with ❤️ for food lovers
                         </p>
