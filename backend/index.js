@@ -50,6 +50,11 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/coupons', couponRoutes);
 
+// Health Check Route
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'UP', message: 'Server is healthy' });
+});
+
 // Basic Route
 app.get('/', (req, res) => {
     res.send('Welcome to the FoodFreaky API!');
