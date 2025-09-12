@@ -15,6 +15,9 @@ const MenuSchema = new mongoose.Schema({
             required: true,
         },
         emoji: String,
+        imageUrl: {
+            type: String, // Field for the dish image URL
+        },
     }],
 });
 
@@ -34,6 +37,9 @@ const RestaurantSchema = new mongoose.Schema({
         required: true,
     },
     tags: [String],
+    imageUrl: {
+        type: String,
+    },
     menu: [MenuSchema],
 }, {
     timestamps: true,

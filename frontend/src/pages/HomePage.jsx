@@ -82,12 +82,12 @@ const HomePage = () => {
                         </div>
 
                         <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-8">
-                            <button
-                                onClick={() => handleNavClick('Contact Us')}
+                            <a 
+                                href="mailto:support@foodfreaky.in"
                                 className="text-orange-300 hover:text-orange-400 transition-colors duration-300 font-medium"
                             >
-                                📞 Contact Us
-                            </button>
+                                📧 support@foodfreaky.in
+                            </a>
                             <div className="flex space-x-4">
                                 <button className="text-gray-300 hover:text-white transition-colors duration-300">
                                     📘 Facebook

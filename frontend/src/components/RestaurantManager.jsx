@@ -73,7 +73,7 @@ const RestaurantManager = () => {
                 <div className="form-grid">
                     <input type="text" placeholder="Restaurant Name" value={name} onChange={e => setName(e.target.value)} required />
                     <input type="text" placeholder="Cuisine (e.g., Italian)" value={cuisine} onChange={e => setCuisine(e.target.value)} required />
-                    <input type="number" placeholder="Delivery Time (mins)" value={deliveryTime} onChange={e => setDeliveryTime(e.target.value)} required />
+                    <input type="text" placeholder="Delivery Time (e.g., 25-35 min)" value={deliveryTime} onChange={e => setDeliveryTime(e.target.value)} required />
                     <input type="text" placeholder="Tags (comma-separated)" value={tags} onChange={e => setTags(e.target.value)} />
                 </div>
                 <button type="submit" className="create-coupon-btn">Add Restaurant</button>

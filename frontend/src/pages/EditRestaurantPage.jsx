@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import Header from '../components/Header';
 import './AdminPage.css';
+import Modal from '../components/Modal'; // Added Modal import
 
 const EditRestaurantPage = () => {
     const { id } = useParams();
@@ -22,10 +23,13 @@ const EditRestaurantPage = () => {
         name: '',
         description: '', // Note: description is not in your MenuSchema, consider adding it
         price: '',
-        category: ''
+        category: '',
+        imageUrl: ''
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [currentItem, setCurrentItem] = useState(null);
 
     useEffect(() => {
         const fetchRestaurant = async () => {
@@ -52,6 +56,32 @@ const EditRestaurantPage = () => {
         fetchRestaurant();
     }, [id, authToken]);
 
+    const handleOpenEditModal = (item) => {
+        setCurrentItem(item);
+        setIsEditModalOpen(true);
+    };
+
+    const handleCloseEditModal = () => {
+        setIsEditModalOpen(false);
+        setCurrentItem(null);
+    };
+
+    const handleUpdateItem = async (e) => {
+        e.preventDefault();
+        try {
+            const config = { headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` } };
+            await axios.put(`${process.env.REACT_APP_API_URL}/api/admin/restaurants/${id}/menu/${currentItem._id}`, currentItem, config);
+            
+            // Refresh the restaurant data to show the update
+            const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/api/admin/restaurants/${id}`, { headers: { Authorization: `Bearer ${authToken}` } });
+            setRestaurant(data.data);
+
+            handleCloseEditModal();
+        } catch (err) {
+            setError(err.response?.data?.msg || 'Failed to update menu item.');
+        }
+    };
+
     const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
     const handleMenuChange = (e) => setNewMenuItem({ ...newMenuItem, [e.target.name]: e.target.value });
 
@@ -72,7 +102,7 @@ const EditRestaurantPage = () => {
 
     const handleAddItem = async (e) => {
         e.preventDefault();
-        const { name, price, category, description } = newMenuItem;
+        const { name, price, category, description, imageUrl } = newMenuItem;
         if (!name || !price || !category) {
             setError('Please fill in all menu item fields.');
             return;
@@ -81,7 +111,7 @@ const EditRestaurantPage = () => {
         const updatedRestaurant = { ...restaurant };
         const categoryIndex = updatedRestaurant.menu.findIndex(cat => cat.category.toLowerCase() === category.toLowerCase());
         
-        const newItem = { name, price: Number(price), description }; // ensure price is a number
+        const newItem = { name, price: Number(price), description, imageUrl }; // ensure price is a number
 
         if (categoryIndex > -1) {
             // Category exists, add item to it
@@ -95,7 +125,7 @@ const EditRestaurantPage = () => {
             const config = { headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` } };
             const { data } = await axios.put(`${process.env.REACT_APP_API_URL}/api/admin/restaurants/${id}`, { menu: updatedRestaurant.menu }, config);
             setRestaurant(data.data);
-            setNewMenuItem({ name: '', description: '', price: '', category: '' }); // Reset form
+            setNewMenuItem({ name: '', description: '', price: '', category: '', imageUrl: '' }); // Reset form
             setError('');
         } catch (err) {
             setError(err.response?.data?.msg || 'Failed to add menu item.');
@@ -149,8 +179,8 @@ const EditRestaurantPage = () => {
                                 <input type="text" name="cuisine" id="cuisine" value={formData.cuisine} onChange={handleChange} required className="admin-form-input" />
                             </div>
                              <div>
-                                <label htmlFor="deliveryTime" className="block text-sm font-medium text-gray-300 mb-1">Delivery Time (mins)</label>
-                                <input type="number" name="deliveryTime" id="deliveryTime" value={formData.deliveryTime} onChange={handleChange} required className="admin-form-input" />
+                                <label htmlFor="deliveryTime" className="block text-sm font-medium text-gray-300 mb-1">Delivery Time (e.g., 25-35 min)</label>
+                                <input type="text" name="deliveryTime" id="deliveryTime" value={formData.deliveryTime} onChange={handleChange} required className="admin-form-input" />
                             </div>
                              <div>
                                 <label htmlFor="tags" className="block text-sm font-medium text-gray-300 mb-1">Tags (comma-separated)</label>
@@ -183,7 +213,10 @@ const EditRestaurantPage = () => {
                             <input type="text" name="name" placeholder="Item Name" value={newMenuItem.name} onChange={handleMenuChange} required className="admin-form-input" />
                             <input type="number" name="price" placeholder="Price" value={newMenuItem.price} onChange={handleMenuChange} required className="admin-form-input" />
                             <input type="text" name="category" placeholder="Category (e.g., Appetizers)" value={newMenuItem.category} onChange={handleMenuChange} required className="admin-form-input" />
-                            <input type="text" name="description" placeholder="Description" value={newMenuItem.description} onChange={handleMenuChange} className="admin-form-input" />
+                            <input type="text" name="imageUrl" placeholder="Image URL (optional)" value={newMenuItem.imageUrl} onChange={handleMenuChange} className="admin-form-input" />
+                            <div className="md:col-span-2">
+                                <input type="text" name="description" placeholder="Description (optional)" value={newMenuItem.description} onChange={handleMenuChange} className="admin-form-input" />
+                            </div>
                         </div>
                         <button type="submit" className="manage-btn !opacity-100 !cursor-pointer hover:bg-blue-600 transition-colors">Add Item</button>
                     </form>
@@ -196,14 +229,18 @@ const EditRestaurantPage = () => {
                                     <h4 className="text-lg font-bold text-orange-400 mb-2 border-b border-gray-600 pb-1">{category.category}</h4>
                                     <div className="space-y-3">
                                         {category.items.map(item => (
-                                            <div key={item._id} className="flex items-center justify-between bg-gray-800 p-3 rounded-md">
+                                            <div key={item._id} className="flex items-start justify-between bg-gray-800 p-3 rounded-md">
+                                                {item.imageUrl && (
+                                                    <img src={item.imageUrl} alt={item.name} className="w-16 h-16 rounded-md object-cover mr-4 flex-shrink-0" />
+                                                )}
                                                 <div className="flex-grow">
                                                     <p className="font-bold text-white">{item.name}</p>
                                                     {item.description && <p className="text-sm text-gray-400 mt-1">{item.description}</p>}
                                                 </div>
-                                                <div className="flex-shrink-0 ml-4 text-right">
-                                                    <p className="font-bold text-white">₹{item.price}</p>
-                                                    <button onClick={() => handleDeleteItem(category.category, item._id)} className="delete-coupon-btn text-lg text-red-500 hover:text-red-400 transition-colors leading-none mt-1">&times;</button>
+                                                <div className="flex items-center flex-shrink-0 ml-4 text-right">
+                                                    <p className="font-bold text-white mr-4">₹{item.price}</p>
+                                                    <button onClick={() => handleOpenEditModal(item)} className="edit-btn text-lg mr-2">✏️</button>
+                                                    <button onClick={() => handleDeleteItem(category.category, item._id)} className="delete-coupon-btn text-lg text-red-500 hover:text-red-400 transition-colors leading-none">&times;</button>
                                                 </div>
                                             </div>
                                         ))}
@@ -217,6 +254,55 @@ const EditRestaurantPage = () => {
                     </div>
                 </div>
             </main>
+
+            {isEditModalOpen && currentItem && (
+                <Modal show={isEditModalOpen} onClose={handleCloseEditModal} title={`Edit ${currentItem.name}`}>
+                    <div className="p-6">
+                        <form onSubmit={handleUpdateItem} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                                <input 
+                                    type="text" 
+                                    value={currentItem.name} 
+                                    onChange={(e) => setCurrentItem({ ...currentItem, name: e.target.value })} 
+                                    className="admin-form-input bg-white text-black" 
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
+                                <input 
+                                    type="number" 
+                                    value={currentItem.price} 
+                                    onChange={(e) => setCurrentItem({ ...currentItem, price: e.target.value })} 
+                                    className="admin-form-input bg-white text-black" 
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                                <input 
+                                    type="text" 
+                                    value={currentItem.description} 
+                                    onChange={(e) => setCurrentItem({ ...currentItem, description: e.target.value })} 
+                                    className="admin-form-input bg-white text-black" 
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+                                <input 
+                                    type="text" 
+                                    value={currentItem.imageUrl} 
+                                    onChange={(e) => setCurrentItem({ ...currentItem, imageUrl: e.target.value })} 
+                                    className="admin-form-input bg-white text-black" 
+                                />
+                            </div>
+                            <div className="flex justify-end space-x-3 pt-4">
+                                <button type="button" onClick={handleCloseEditModal} className="manage-btn bg-gray-300 hover:bg-gray-400">Cancel</button>
+                                <button type="submit" className="manage-btn bg-blue-500 hover:bg-blue-600">Save Changes</button>
+                            </div>
+                        </form>
+                    </div>
+                </Modal>
+            )}
         </div>
     );
 };

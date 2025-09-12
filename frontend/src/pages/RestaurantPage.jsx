@@ -86,9 +86,13 @@ function RestaurantPage() {
                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                              {Array.isArray(restaurants) && restaurants.map(restaurant => (
                                  <div key={restaurant._id} onClick={() => openRestaurant(restaurant)} className="restaurant-card bg-white rounded-2xl shadow-lg overflow-hidden cursor-pointer">
-                                     <div className="h-48 bg-gradient-to-br from-orange-200 via-red-200 to-yellow-200 flex items-center justify-center">
-                                         <span className="text-6xl">🏛️</span>
-                                     </div>
+                                     {restaurant.imageUrl ? (
+                                        <img src={restaurant.imageUrl} alt={restaurant.name} className="h-48 w-full object-cover" />
+                                     ) : (
+                                        <div className="h-48 bg-gradient-to-br from-orange-200 via-red-200 to-yellow-200 flex items-center justify-center">
+                                            <span className="text-6xl">🏛️</span>
+                                        </div>
+                                     )}
                                      
                                      <div className="p-6">
                                          <div className="mb-3">
@@ -166,9 +170,13 @@ function RestaurantPage() {
                                                 )}
                                             </div>
                                         </div>
-                                        <div className="w-20 h-20 bg-gradient-to-br from-white to-gray-100 rounded-lg flex items-center justify-center ml-4">
-                                            <span className="text-2xl">{item.emoji || '🍕'}</span>
-                                        </div>
+                                        {item.imageUrl ? (
+                                            <img src={item.imageUrl} alt={item.name} className="w-24 h-24 bg-gray-200 rounded-lg object-cover ml-4" />
+                                        ) : (
+                                            <div className="w-24 h-24 bg-gradient-to-br from-white to-gray-100 rounded-lg flex items-center justify-center ml-4">
+                                                <span className="text-2xl">{item.emoji || '🍕'}</span>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             ))}
