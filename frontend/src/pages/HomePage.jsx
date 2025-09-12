@@ -6,25 +6,6 @@ import './HomePages.css'; // move all CSS here (optional if using Tailwind)
 const HomePage = () => {
     const navigate = useNavigate();
 
-    const handleNavClick = (section) => {
-        switch (section) {
-            case 'Restaurants':
-                navigate('/restaurants');
-                break;
-            case 'Register':
-                navigate('/register');
-                break;
-            case 'Login':
-                navigate('/login');
-                break;
-            case 'Contact Us':
-                navigate('/contact');
-                break;
-            default:
-                break;
-        }
-    };
-
     return (
         <div className="h-screen relative flex flex-col overflow-hidden">
             {/* Food Background */}
@@ -73,7 +54,7 @@ const HomePage = () => {
             </main>
 
             {/* Footer */}
-            <footer className="relative z-10 bg-black bg-opacity-60 text-white py-0">
+            <footer className="relative z-10 bg-black bg-opacity-60 text-white py-6">
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="flex flex-col md:flex-row items-center justify-between">
                         <div className="mb-4 md:mb-0">

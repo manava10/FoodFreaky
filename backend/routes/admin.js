@@ -2,8 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { getAllOrders, updateOrderStatus } = require('../controllers/admin');
 const { getCoupons, createCoupon, deleteCoupon } = require('../controllers/coupons');
-const { createRestaurant, updateRestaurant, deleteRestaurant, getRestaurantById } = require('../controllers/restaurantsAdmin');
-const { updateMenuItem } = require('../controllers/menuItemsAdmin');
+const { createRestaurant, updateRestaurant, deleteRestaurant, getRestaurantById, updateMenuItem } = require('../controllers/restaurantsAdmin');
 const { protect, authorize } = require('../middleware/auth');
 
 // Note: All routes in this file are automatically prefixed with /api/admin
