@@ -60,14 +60,6 @@ function RestaurantPage() {
         return itemInCart ? itemInCart.quantity : 0;
     };
     
-    if (loading) {
-        return <p>Loading restaurants...</p>;
-    }
-    
-    if (error) {
-        return <p>{error}</p>;
-    }
-
     return (
         <div className="bg-gray-50 min-h-screen" style={{ backgroundImage: `url(${foodBackground})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed' }}>
             <div className="fixed inset-0 bg-black bg-opacity-40 z-0"></div>
@@ -76,7 +68,17 @@ function RestaurantPage() {
 
             <main className="max-w-7xl mx-auto px-4 py-8 relative z-10">
                 
-                {!selectedRestaurant ? (
+                {loading ? (
+                    <div className="text-center py-20">
+                        <h2 className="text-3xl font-bold text-white">Loading Restaurants...</h2>
+                        <p className="text-gray-300 mt-2">Finding the best food near you!</p>
+                    </div>
+                ) : error ? (
+                    <div className="text-center py-20 bg-red-800 bg-opacity-50 p-6 rounded-lg">
+                        <h2 className="text-3xl font-bold text-white">Oops! Something went wrong.</h2>
+                        <p className="text-red-200 mt-2">{error}</p>
+                    </div>
+                ) : !selectedRestaurant ? (
                     <div id="restaurantList" className="fade-in">
                          <div className="mb-8 text-center">
                              <h2 className="text-4xl font-bold text-white mb-3 drop-shadow-lg">Restaurants Near You</h2>
