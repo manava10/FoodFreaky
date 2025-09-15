@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import './HomePages.css'; // move all CSS here (optional if using Tailwind)
+import foodBackground from '../assets/images/food-background.jpg';
 
 const HomePage = () => {
     const navigate = useNavigate();
@@ -11,7 +12,7 @@ const HomePage = () => {
             {/* Food Background */}
             <div
                 className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-                style={{ backgroundImage: "url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')" }}
+                style={{ backgroundImage: `url(${foodBackground})` }}
             >
                 {/* Floating emojis */}
                 <div className="absolute inset-0 overflow-hidden">

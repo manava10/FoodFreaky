@@ -4,6 +4,7 @@ import Modal from '../components/Modal';
 import { useAuth } from '../context/AuthContext';
 import Header from '../components/Header';
 import './DashboardPage.css';
+import foodBackground from '../assets/images/food-background.jpg';
 
 const DashboardPage = () => {
     const { user, authToken } = useAuth();
@@ -102,27 +103,8 @@ const DashboardPage = () => {
     };
 
     return (
-        <div className="min-h-screen relative">
-            {/* Food Background */}
-            <div 
-                className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-                style={{
-                    backgroundImage: `url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80')`
-                }}
-            >
-                {/* Animated floating elements */}
-                <div className="absolute inset-0 overflow-hidden">
-                    <div className="floating-element absolute top-20 left-10 text-3xl opacity-20">🍕</div>
-                    <div className="floating-element-slow absolute top-40 right-20 text-2xl opacity-15">🍔</div>
-                    <div className="floating-element absolute bottom-32 left-1/4 text-3xl opacity-15">🍜</div>
-                    <div className="floating-element-slow absolute top-1/3 right-1/4 text-2xl opacity-20">🌮</div>
-                    <div className="floating-element absolute bottom-20 right-1/3 text-2xl opacity-15">🍰</div>
-                </div>
-                
-                {/* Dark overlay for readability */}
-                <div className="absolute inset-0 bg-black bg-opacity-70"></div>
-            </div>
-            
+        <div className="min-h-screen bg-gray-900" style={{ backgroundImage: `url(${foodBackground})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed' }}>
+            <div className="absolute inset-0 bg-black bg-opacity-70 z-0"></div>
             <Header />
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">

@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import Modal from '../components/Modal';
 import Header from '../components/Header';
 import './RestaurantPage.css';
+import foodBackground from '../assets/images/food-background.jpg';
 
 function RestaurantPage() {
     const [restaurants, setRestaurants] = useState([]);
@@ -68,7 +69,7 @@ function RestaurantPage() {
     }
 
     return (
-        <div className="bg-gray-50 min-h-screen" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1504674900247-0877df9cc836')", backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed' }}>
+        <div className="bg-gray-50 min-h-screen" style={{ backgroundImage: `url(${foodBackground})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed' }}>
             <div className="fixed inset-0 bg-black bg-opacity-40 z-0"></div>
             
             <Header />

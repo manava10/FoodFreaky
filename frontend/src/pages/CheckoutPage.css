@@ -1,10 +1,9 @@
 .checkout-page-container {
-    min-height: 100vh;
-    background-image: url('https://images.unsplash.com/photo-1504674900247-0877df9cc836');
+    background-image: url('../assets/images/food-background.jpg');
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
-    position: relative;
+    min-height: 100vh;
 }
 
 .checkout-grid {

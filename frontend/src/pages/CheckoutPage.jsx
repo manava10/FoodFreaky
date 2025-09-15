@@ -128,12 +128,12 @@ const CheckoutPage = () => {
                             </div>
                             <div>
                                 <label htmlFor="address" className="block text-sm font-medium text-gray-700">Shipping Address</label>
-                                <textarea id="address" rows="3" value={address} onChange={(e) => setAddress(e.target.value)} required className="mt-1 block w-full p-2 border border-gray-300 rounded-md" placeholder="123 Main St, Anytown, USA"></textarea>
+                                <textarea id="address" rows="3" value={address} onChange={(e) => setAddress(e.target.value)} required className="mt-1 block w-full p-2 border border-gray-300 rounded-md" placeholder="Enter your Hostel Name, (e.g., MH1, LH2)"></textarea>
                             </div>
                         </div>
                         <div className="detail-card">
                             <h2 className="card-title">Payment Method</h2>
-                            <p className="text-sm text-gray-500">Payment integration coming soon. Click "Place Order" to complete your purchase for now.</p>
+                            <p className="text-sm text-gray-500">Payment integration coming soon. Click "Place Order" to complete your purchase for now. All the payment will be taken during delivery either UPI/CASH.</p>
                         </div>
                     </div>
 
