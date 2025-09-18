@@ -122,7 +122,7 @@ const generateInvoicePdf = (order) => {
         doc.font('Times-BoldItalic')
            .fontSize(18)
            .fillColor('#002266')
-           .text('Yoginder', 360, signatureY, {
+           .text('M & Yuviiii', 360, signatureY, {
             width: 190,
             align: 'center'
         });
