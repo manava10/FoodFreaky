@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { useSettings } from '../context/SettingsContext';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Header from '../components/Header';
@@ -10,16 +11,19 @@ import './CheckoutPage.css';
 const CheckoutPage = () => {
     const { cartItems, cartTotal, clearCart } = useCart();
     const { user, authToken } = useAuth();
+    const { isOrderingEnabled, isLoadingSettings } = useSettings();
     const navigate = useNavigate();
 
     const [address, setAddress] = useState('');
     const [contactNumber, setContactNumber] = useState('');
     const [couponCode, setCouponCode] = useState('');
     const [discount, setDiscount] = useState(0);
+    const [appliedCouponCode, setAppliedCouponCode] = useState('');
     const [couponError, setCouponError] = useState('');
     const [isPlacingOrder, setIsPlacingOrder] = useState(false);
     const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
     const [couponSuccess, setCouponSuccess] = useState(false);
+    const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
 
     useEffect(() => {
         if (user && user.contactNumber) {
@@ -27,13 +31,29 @@ const CheckoutPage = () => {
         }
     }, [user]);
 
-    const handleApplyCoupon = async () => {
-        setCouponError('');
-        setDiscount(0);
-        if (!couponCode) return;
+    // Recalculate discount if cart total changes
+    useEffect(() => {
+        if (appliedCouponCode) {
+            handleApplyCoupon(true); // Pass flag to indicate recalculation
+        }
+    }, [cartTotal]);
 
+    const handleApplyCoupon = async (isRecalculation = false) => {
+        const codeToValidate = isRecalculation ? appliedCouponCode : couponCode;
+        if (!codeToValidate) {
+            if (!isRecalculation) setCouponError('Please enter a coupon code.');
+            return;
+        }
+
+        setCouponError('');
+        // Don't reset discount if it's a recalculation
+        if (!isRecalculation) {
+            setDiscount(0);
+        }
+
+        setIsApplyingCoupon(true);
         try {
-            const { data } = await axios.post(`${process.env.REACT_APP_API_URL}/api/coupons/validate`, { code: couponCode });
+            const { data } = await axios.post(`${process.env.REACT_APP_API_URL}/api/coupons/validate`, { code: codeToValidate });
             const coupon = data.data;
 
             let calculatedDiscount = 0;
@@ -48,19 +68,47 @@ const CheckoutPage = () => {
             }
 
             setDiscount(calculatedDiscount);
-            setCouponSuccess(true); // Open success modal
+            if (!isRecalculation) {
+                setAppliedCouponCode(couponCode); // Store applied coupon
+                setCouponCode(''); // Clear input
+                setCouponSuccess(true); // Open success modal
+            }
 
         } catch (err) {
             const errorMsg = err.response?.data?.msg || 'Failed to apply coupon.';
             setCouponError(errorMsg);
-            alert(errorMsg); // Also show an alert for immediate feedback
+            // In case of an error during recalculation (e.g., coupon expired), remove it
+            if (isRecalculation) {
+                handleRemoveCoupon();
+            }
+        } finally {
+            setIsApplyingCoupon(false);
         }
+    };
+
+    const handleRemoveCoupon = () => {
+        setDiscount(0);
+        setCouponCode('');
+        setAppliedCouponCode('');
+        setCouponError('');
     };
     
     const subtotal = cartTotal;
-    const taxes = subtotal * 0.1; // Dummy 10% tax
-    const shipping = 50; // Dummy 50 shipping
-    const finalTotal = subtotal + taxes + shipping - discount;
+
+    // Calculate dynamic service fee
+    let serviceFee;
+    if (subtotal < 500) {
+        serviceFee = subtotal * 0.10; // 10%
+    } else if (subtotal >= 500 && subtotal < 750) {
+        serviceFee = subtotal * 0.08; // 8%
+    } else if (subtotal >= 750 && subtotal < 1000) {
+        serviceFee = subtotal * 0.065; // 6.5%
+    } else { // 1000 and above
+        serviceFee = subtotal * 0.05; // 5%
+    }
+
+    const deliveryCharge = 50;
+    const finalTotal = subtotal + serviceFee + deliveryCharge - discount;
 
     const handlePlaceOrder = async () => {
         if (!address || !contactNumber) {
@@ -76,10 +124,10 @@ const CheckoutPage = () => {
             })),
             shippingAddress: address,
             itemsPrice: subtotal,
-            taxPrice: taxes,
-            shippingPrice: shipping,
+            taxPrice: serviceFee,
+            shippingPrice: deliveryCharge,
             totalPrice: finalTotal,
-            couponUsed: discount > 0 ? couponCode : null
+            couponUsed: discount > 0 ? appliedCouponCode : null
         };
 
         try {
@@ -101,6 +149,26 @@ const CheckoutPage = () => {
             setIsPlacingOrder(false);
         }
     };
+
+    if (isLoadingSettings) {
+        return <div className="text-center p-8 text-white">Loading...</div>;
+    }
+
+    if (!isOrderingEnabled) {
+        return (
+            <div className="checkout-page-container">
+                <div className="fixed inset-0 bg-black bg-opacity-60 z-0"></div>
+                <Header />
+                <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10 text-center text-white">
+                    <h1 className="text-4xl font-bold mb-4">Ordering Closed</h1>
+                    <p className="text-xl mb-8">We are not currently accepting orders. Please check back later.</p>
+                    <button onClick={() => navigate('/')} className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded">
+                        Go to Homepage
+                    </button>
+                </main>
+            </div>
+        );
+    }
 
     if (!user) {
         return <p>Loading...</p>;
@@ -149,14 +217,34 @@ const CheckoutPage = () => {
                             ))}
                         </div>
                         <div className="coupon-section">
-                            <input 
-                                type="text" 
-                                placeholder="Enter coupon code" 
-                                className="coupon-input"
-                                value={couponCode}
-                                onChange={(e) => setCouponCode(e.target.value)}
-                            />
-                            <button onClick={handleApplyCoupon} className="coupon-btn">Apply</button>
+                            {discount > 0 ? (
+                                <div className="applied-coupon">
+                                    <p className='text-sm font-medium'>
+                                        Coupon <span className='font-bold'>{appliedCouponCode}</span> applied!
+                                    </p>
+                                    <button onClick={handleRemoveCoupon} className="remove-coupon-btn">
+                                        Remove
+                                    </button>
+                                </div>
+                            ) : (
+                                <>
+                                    <input 
+                                        type="text" 
+                                        placeholder="Enter coupon code" 
+                                        className="coupon-input"
+                                        value={couponCode}
+                                        onChange={(e) => setCouponCode(e.target.value)}
+                                        disabled={isApplyingCoupon}
+                                    />
+                                    <button 
+                                        onClick={() => handleApplyCoupon(false)} 
+                                        className="coupon-btn"
+                                        disabled={isApplyingCoupon || !couponCode}
+                                    >
+                                        {isApplyingCoupon ? 'Applying...' : 'Apply'}
+                                    </button>
+                                </>
+                            )}
                         </div>
                         {couponError && <p className="coupon-error">{couponError}</p>}
                         <div className="price-details">
@@ -165,8 +253,12 @@ const CheckoutPage = () => {
                                 <span>₹{subtotal.toFixed(2)}</span>
                             </div>
                             <div className="price-row">
-                                <span>Taxes & Fees</span>
-                                <span>₹{taxes.toFixed(2)}</span>
+                                <span>Delivery Charges</span>
+                                <span>₹{deliveryCharge.toFixed(2)}</span>
+                            </div>
+                            <div className="price-row">
+                                <span>Service Fee</span>
+                                <span>₹{serviceFee.toFixed(2)}</span>
                             </div>
                             {discount > 0 && (
                                 <div className="price-row discount">
@@ -205,7 +297,7 @@ const CheckoutPage = () => {
             <SuccessModal
                 show={couponSuccess}
                 title="Coupon Applied!"
-                message={`The coupon '${couponCode}' was applied successfully.`}
+                message={`The coupon '${appliedCouponCode}' was applied successfully.`}
                 buttonText="Awesome!"
                 onButtonClick={() => setCouponSuccess(false)}
             />

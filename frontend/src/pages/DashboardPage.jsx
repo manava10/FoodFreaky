@@ -87,7 +87,8 @@ const DashboardPage = () => {
         }
     };
 
-    const totalSpent = orders.reduce((acc, order) => acc + order.totalPrice, 0);
+    const successfulOrders = orders.filter(order => order.status === 'Delivered');
+    const totalSpent = successfulOrders.reduce((acc, order) => acc + order.totalPrice, 0);
 
     const getStatusClass = (status) => {
         switch (status.toLowerCase()) {
@@ -120,8 +121,8 @@ const DashboardPage = () => {
                                     <p className="text-orange-100 text-lg">Ready for your next delicious meal?</p>
                                     <div className="mt-4 flex items-center space-x-2 md:space-x-6">
                                         <div className="bg-white/20 rounded-lg p-3 text-center">
-                                            <div className="text-2xl font-bold">{orders.length}</div>
-                                            <div className="text-sm text-orange-100">Total Orders</div>
+                                            <div className="text-2xl font-bold">{successfulOrders.length}</div>
+                                            <div className="text-sm text-orange-100">Completed Orders</div>
                                         </div>
                                         <div className="bg-white/20 rounded-lg p-3 text-center">
                                             <div className="text-2xl font-bold">₹{totalSpent.toFixed(2)}</div>

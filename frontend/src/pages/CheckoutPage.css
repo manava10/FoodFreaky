@@ -112,3 +112,29 @@
     text-align: center;
     margin-top: 0.75rem;
 }
+
+.applied-coupon {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    background-color: #f0fdf4; /* Light green */
+    color: #166534; /* Darker green */
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    border: 1px solid #bbf7d0; /* Even lighter green border */
+}
+
+.remove-coupon-btn {
+    background: transparent;
+    border: none;
+    color: #ef4444; /* red-500 */
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0.25rem;
+    text-decoration: underline;
+}
+
+.remove-coupon-btn:hover {
+    color: #dc2626; /* red-600 */
+}

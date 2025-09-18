@@ -9,11 +9,12 @@ dotenv.config();
 // Connect to database
 connectDB();
 
-const authRoutes = require('./routes/auth');
-const restaurantRoutes = require('./routes/restaurants');
-const orderRoutes = require('./routes/orders');
-const adminRoutes = require('./routes/admin');
-const couponRoutes = require('./routes/coupons');
+const auth = require('./routes/auth');
+const orders = require('./routes/orders');
+const restaurants = require('./routes/restaurants');
+const coupons = require('./routes/coupons');
+const admin = require('./routes/admin');
+const settings = require('./routes/settings');
 
 const app = express();
 
@@ -45,11 +46,12 @@ app.use(cors(corsOptions));
 app.use(express.json());
 
 // Mount routers
-app.use('/api/auth', authRoutes);
-app.use('/api/restaurants', restaurantRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/coupons', couponRoutes);
+app.use('/api/auth', auth);
+app.use('/api/orders', orders);
+app.use('/api/restaurants', restaurants);
+app.use('/api/coupons', coupons);
+app.use('/api/admin', admin);
+app.use('/api/settings', settings);
 
 // Health Check Route
 app.get('/health', (req, res) => {
@@ -61,8 +63,7 @@ app.get('/', (req, res) => {
     res.send('Welcome to the FoodFreaky API!');
 });
 
-const PORT = process.env.PORT || 5000;
-
-app.listen(PORT, () => {
+const PORT = process.env.PORT || 5001;
+const server = app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });

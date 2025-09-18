@@ -24,6 +24,14 @@ const CouponSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
+    usageLimit: {
+        type: Number,
+        default: null // null means unlimited uses
+    },
+    timesUsed: {
+        type: Number,
+        default: 0
+    },
     createdAt: {
         type: Date,
         default: Date.now

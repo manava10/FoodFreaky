@@ -12,6 +12,7 @@ const CouponManager = () => {
     const [discountType, setDiscountType] = useState('percentage');
     const [value, setValue] = useState('');
     const [expiresAt, setExpiresAt] = useState('');
+    const [usageLimit, setUsageLimit] = useState('');
     const [error, setError] = useState('');
 
     const fetchCoupons = useCallback(async () => {
@@ -43,11 +44,17 @@ const CouponManager = () => {
                 expires.setHours(23, 59, 59, 999);
             }
 
-            const newCoupon = { code, discountType, value, expiresAt: expires };
+            const newCoupon = { 
+                code, 
+                discountType, 
+                value, 
+                expiresAt: expires,
+                usageLimit: usageLimit ? Number(usageLimit) : null 
+            };
             const { data } = await axios.post(`${process.env.REACT_APP_API_URL}/api/admin/coupons`, newCoupon, config);
             setCoupons([data.data, ...coupons]);
             // Clear form
-            setCode(''); setDiscountType('percentage'); setValue(''); setExpiresAt('');
+            setCode(''); setDiscountType('percentage'); setValue(''); setExpiresAt(''); setUsageLimit('');
         } catch (err) {
             setError(err.response?.data?.msg || 'Failed to create coupon');
         }
@@ -73,6 +80,7 @@ const CouponManager = () => {
                 <div className="form-grid">
                     <input type="text" placeholder="Coupon Code (e.g., SUMMER20)" value={code} onChange={e => setCode(e.target.value)} required />
                     <input type="number" placeholder="Value (e.g., 20)" value={value} onChange={e => setValue(e.target.value)} required min="0" />
+                    <input type="number" placeholder="Usage Limit (optional)" value={usageLimit} onChange={e => setUsageLimit(e.target.value)} min="0" />
                     <select value={discountType} onChange={e => setDiscountType(e.target.value)}>
                         <option value="percentage">Percentage (%)</option>
                         <option value="fixed">Fixed Amount (₹)</option>
@@ -90,6 +98,9 @@ const CouponManager = () => {
                             <strong className="coupon-code">{coupon.code}</strong>
                             <p>{coupon.discountType === 'percentage' ? `${coupon.value}% off` : `₹${coupon.value} off`}</p>
                             <small>Expires: {coupon.expiresAt ? new Date(coupon.expiresAt).toLocaleDateString() : 'Never'}</small>
+                            <small style={{ display: 'block' }}>
+                                Usage: {coupon.timesUsed} / {coupon.usageLimit !== null ? coupon.usageLimit : '∞'}
+                            </small>
                         </div>
                         <button onClick={() => handleDeleteCoupon(coupon._id)} className="delete-coupon-btn">&times;</button>
                     </div>

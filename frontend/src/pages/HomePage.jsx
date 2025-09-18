@@ -71,15 +71,14 @@ const HomePage = () => {
                                 📧 support@foodfreaky.in
                             </a>
                             <div className="flex space-x-4">
-                                <button className="text-gray-300 hover:text-white transition-colors duration-300">
-                                    📘 Facebook
-                                </button>
-                                <button className="text-gray-300 hover:text-white transition-colors duration-300">
+                                <a 
+                                    href="https://www.instagram.com/foodfreakyindia?igsh=MW9nMjF5ZDFhYXhhOQ==" 
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    className="text-gray-300 hover:text-white transition-colors duration-300"
+                                >
                                     📷 Instagram
-                                </button>
-                                <button className="text-gray-300 hover:text-white transition-colors duration-300">
-                                    🐦 Twitter
-                                </button>
+                                </a>
                             </div>
                         </div>
                     </div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { useSettings } from '../context/SettingsContext';
 import { useNavigate } from 'react-router-dom';
 import Modal from '../components/Modal';
 import Header from '../components/Header';
@@ -18,6 +19,7 @@ function RestaurantPage() {
     
     const { addToCart, increaseQuantity, decreaseQuantity, cartItems } = useCart();
     const { isLoggedIn } = useAuth();
+    const { isOrderingEnabled, isLoadingSettings } = useSettings();
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -59,12 +61,24 @@ function RestaurantPage() {
         const itemInCart = cartItems.find(item => item.name === itemName);
         return itemInCart ? itemInCart.quantity : 0;
     };
+
+    const NotAcceptingOrdersBanner = () => {
+        if (isLoadingSettings || isOrderingEnabled) {
+            return null;
+        }
+        return (
+            <div className="bg-red-600 text-white text-center p-3 font-semibold shadow-lg">
+                We are currently not accepting orders. Please check back later.
+            </div>
+        );
+    };
     
     return (
         <div className="bg-gray-50 min-h-screen" style={{ backgroundImage: `url(${foodBackground})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed' }}>
             <div className="fixed inset-0 bg-black bg-opacity-40 z-0"></div>
             
             <Header />
+            <NotAcceptingOrdersBanner />
 
             <main className="max-w-7xl mx-auto px-4 py-8 relative z-10">
                 
@@ -161,14 +175,26 @@ function RestaurantPage() {
                                                 <span className="font-bold text-lg text-gray-800">₹{item.price}</span>
                                                 
                                                 {getItemQuantity(item.name) === 0 ? (
-                                                    <button onClick={() => handleAddToCart(item, selectedRestaurant)} className="add-to-cart-btn">
-                                                        ADD
+                                                    <button 
+                                                        onClick={() => handleAddToCart(item, selectedRestaurant)} 
+                                                        className="add-to-cart-btn"
+                                                        disabled={!isOrderingEnabled || isLoadingSettings}
+                                                    >
+                                                        {isOrderingEnabled ? 'ADD' : 'CLOSED'}
                                                     </button>
                                                 ) : (
                                                     <div className="quantity-control">
-                                                        <button onClick={() => decreaseQuantity(item.name)} className="quantity-btn">-</button>
+                                                        <button 
+                                                            onClick={() => decreaseQuantity(item.name)} 
+                                                            className="quantity-btn"
+                                                            disabled={!isOrderingEnabled || isLoadingSettings}
+                                                        >-</button>
                                                         <span className="quantity-display">{getItemQuantity(item.name)}</span>
-                                                        <button onClick={() => increaseQuantity(item.name)} className="quantity-btn">+</button>
+                                                        <button 
+                                                            onClick={() => increaseQuantity(item.name)} 
+                                                            className="quantity-btn"
+                                                            disabled={!isOrderingEnabled || isLoadingSettings}
+                                                        >+</button>
                                                     </div>
                                                 )}
                                             </div>

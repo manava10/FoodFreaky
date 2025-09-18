@@ -7,7 +7,20 @@ const generateInvoicePdf = require('../utils/generateInvoicePdf');
 // @access  Private (Admin, DeliveryAdmin)
 exports.getAllOrders = async (req, res) => {
     try {
-        const orders = await Order.find().populate('user', 'name email contactNumber').sort({ createdAt: -1 });
+        let query = {};
+
+        // If the user is a delivery admin, only show them today's orders
+        if (req.user.role === 'deliveryadmin') {
+            const startOfDay = new Date();
+            startOfDay.setHours(0, 0, 0, 0);
+
+            const endOfDay = new Date();
+            endOfDay.setHours(23, 59, 59, 999);
+
+            query.createdAt = { $gte: startOfDay, $lte: endOfDay };
+        }
+
+        const orders = await Order.find(query).populate('user', 'name email contactNumber').sort({ createdAt: -1 });
         res.json({ success: true, data: orders });
     } catch (error) {
         console.error('Failed to fetch orders:', error);

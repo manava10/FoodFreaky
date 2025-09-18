@@ -1,4 +1,5 @@
 const Order = require('../models/Order');
+const Coupon = require('../models/Coupon');
 const PDFDocument = require('pdfkit');
 
 // @desc    Create new order
@@ -32,6 +33,12 @@ exports.createOrder = async (req, res) => {
         });
 
         const createdOrder = await order.save();
+
+        // If a coupon was used, increment its timesUsed count
+        if (couponUsed) {
+            await Coupon.updateOne({ code: couponUsed.toUpperCase() }, { $inc: { timesUsed: 1 } });
+        }
+
         res.status(201).json(createdOrder);
     } catch (error) {
         console.error(error);

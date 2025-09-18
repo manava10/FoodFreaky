@@ -5,18 +5,21 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
+import { SettingsProvider } from './context/SettingsContext';
 import { BrowserRouter as Router } from 'react-router-dom';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <AuthProvider>
-      <Router>
-        <CartProvider>
-          <App />
-        </CartProvider>
-      </Router>
-    </AuthProvider>
+    <Router>
+      <AuthProvider>
+        <SettingsProvider>
+          <CartProvider>
+            <App />
+          </CartProvider>
+        </SettingsProvider>
+      </AuthProvider>
+    </Router>
   </React.StrictMode>
 );
 

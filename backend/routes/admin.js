@@ -3,6 +3,7 @@ const router = express.Router();
 const { getAllOrders, updateOrderStatus } = require('../controllers/admin');
 const { getCoupons, createCoupon, deleteCoupon } = require('../controllers/coupons');
 const { createRestaurant, updateRestaurant, deleteRestaurant, getRestaurantById, updateMenuItem } = require('../controllers/restaurantsAdmin');
+const { updateOrderingStatus } = require('../controllers/settings');
 const { protect, authorize } = require('../middleware/auth');
 
 // Note: All routes in this file are automatically prefixed with /api/admin
@@ -13,6 +14,10 @@ router.route('/orders')
 router.route('/orders/:id')
     .put(protect, authorize('admin', 'deliveryadmin'), updateOrderStatus);
     
+// Settings Management (for admin ONLY)
+router.route('/settings/ordering')
+    .put(protect, authorize('admin'), updateOrderingStatus);
+
 // Coupon Management Routes (for admin ONLY)
 router.route('/coupons')
     .get(protect, authorize('admin'), getCoupons)

@@ -5,6 +5,7 @@ import Header from '../components/Header';
 import CouponManager from '../components/CouponManager';
 import RestaurantManager from '../components/RestaurantManager';
 import OrderManager from '../components/OrderManager';
+import SettingsManager from '../components/SettingsManager';
 import './AdminPage.css';
 
 const SuperAdminPage = () => {
@@ -69,6 +70,8 @@ const SuperAdminPage = () => {
                             <CouponManager />
                             <RestaurantManager />
                         </div>
+                        
+                        <SettingsManager />
 
                         {/* Live Order Management Section */}
                         <div className="admin-management-card mt-8">
