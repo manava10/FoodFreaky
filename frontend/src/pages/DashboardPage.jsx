@@ -104,7 +104,7 @@ const DashboardPage = () => {
 
     return (
         <div className="min-h-screen bg-gray-900" style={{ backgroundImage: `url(${foodBackground})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed' }}>
-            <div className="absolute inset-0 bg-black bg-opacity-70 z-0"></div>
+            <div className="fixed inset-0 bg-black bg-opacity-70 z-0"></div>
             <Header />
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
