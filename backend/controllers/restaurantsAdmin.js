@@ -64,7 +64,44 @@ exports.deleteRestaurant = async (req, res) => {
     }
 };
 
-// @desc    Update a specific menu item within a restaurant
+// @desc    Add a new menu item to a restaurant's category
+// @route   POST /api/admin/restaurants/:restaurantId/menu
+// @access  Private (Admin)
+exports.addMenuItem = async (req, res) => {
+    try {
+        const { category, name, price, emoji, imageUrl } = req.body;
+        const { restaurantId } = req.params;
+
+        const restaurant = await Restaurant.findById(restaurantId);
+
+        if (!restaurant) {
+            return res.status(404).json({ msg: 'Restaurant not found' });
+        }
+
+        // Find the menu category
+        const menuCategory = restaurant.menu.find(m => m.category === category);
+
+        if (menuCategory) {
+            // Add item to existing category
+            menuCategory.items.push({ name, price, emoji, imageUrl });
+        } else {
+            // Create new category and add item
+            restaurant.menu.push({
+                category,
+                items: [{ name, price, emoji, imageUrl }]
+            });
+        }
+
+        await restaurant.save();
+        res.status(201).json({ success: true, data: restaurant });
+
+    } catch (error) {
+        console.error('Error adding menu item:', error);
+        res.status(500).json({ msg: 'Server Error' });
+    }
+};
+
+// @desc    Update a menu item
 // @route   PUT /api/admin/restaurants/:restaurantId/menu/:itemId
 // @access  Private (Admin)
 exports.updateMenuItem = async (req, res) => {

@@ -104,27 +104,24 @@ const EditRestaurantPage = () => {
         e.preventDefault();
         const { name, price, category, description, imageUrl } = newMenuItem;
         if (!name || !price || !category) {
-            setError('Please fill in all menu item fields.');
+            setError('Please fill in name, price, and category.');
             return;
         }
 
-        const updatedRestaurant = { ...restaurant };
-        const categoryIndex = updatedRestaurant.menu.findIndex(cat => cat.category.toLowerCase() === category.toLowerCase());
-        
-        const newItem = { name, price: Number(price), description, imageUrl }; // ensure price is a number
+        const newItemData = {
+            name,
+            price: Number(price),
+            category: category.trim(),
+            description,
+            imageUrl
+        };
 
-        if (categoryIndex > -1) {
-            // Category exists, add item to it
-            updatedRestaurant.menu[categoryIndex].items.push(newItem);
-        } else {
-            // New category, create it and add item
-            updatedRestaurant.menu.push({ category, items: [newItem] });
-        }
-        
         try {
             const config = { headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` } };
-            const { data } = await axios.put(`${process.env.REACT_APP_API_URL}/api/admin/restaurants/${id}`, { menu: updatedRestaurant.menu }, config);
-            setRestaurant(data.data);
+            // Use the new, dedicated endpoint
+            const { data } = await axios.post(`${process.env.REACT_APP_API_URL}/api/admin/restaurants/${id}/menu`, newItemData, config);
+            
+            setRestaurant(data.data); // The backend now returns the updated restaurant
             setNewMenuItem({ name: '', description: '', price: '', category: '', imageUrl: '' }); // Reset form
             setError('');
         } catch (err) {

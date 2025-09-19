@@ -2,7 +2,14 @@ const express = require('express');
 const router = express.Router();
 const { getAllOrders, updateOrderStatus } = require('../controllers/admin');
 const { getCoupons, createCoupon, deleteCoupon } = require('../controllers/coupons');
-const { createRestaurant, updateRestaurant, deleteRestaurant, getRestaurantById, updateMenuItem } = require('../controllers/restaurantsAdmin');
+const { 
+    createRestaurant, 
+    updateRestaurant, 
+    deleteRestaurant, 
+    getRestaurantById, 
+    updateMenuItem,
+    addMenuItem
+} = require('../controllers/restaurantsAdmin');
 const { updateOrderingStatus } = require('../controllers/settings');
 const { protect, authorize } = require('../middleware/auth');
 
@@ -32,6 +39,9 @@ router.route('/restaurants/:id')
     .get(protect, authorize('admin'), getRestaurantById)
     .put(protect, authorize('admin'), updateRestaurant)
     .delete(protect, authorize('admin'), deleteRestaurant);
+
+router.route('/restaurants/:restaurantId/menu')
+    .post(protect, authorize('admin'), addMenuItem);
 
 router.route('/restaurants/:restaurantId/menu/:itemId')
     .put(protect, authorize('admin'), updateMenuItem);
