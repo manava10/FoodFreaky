@@ -20,7 +20,11 @@ exports.getAllOrders = async (req, res) => {
             query.createdAt = { $gte: startOfDay, $lte: endOfDay };
         }
 
-        const orders = await Order.find(query).populate('user', 'name email contactNumber').sort({ createdAt: -1 });
+        const orders = await Order.find(query)
+            .populate('user', 'name email contactNumber')
+            .populate('restaurant', 'name')
+            .sort({ createdAt: -1 });
+            
         res.json({ success: true, data: orders });
     } catch (error) {
         console.error('Failed to fetch orders:', error);

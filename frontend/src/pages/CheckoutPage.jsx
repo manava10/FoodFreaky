@@ -127,7 +127,8 @@ const CheckoutPage = () => {
             taxPrice: serviceFee,
             shippingPrice: deliveryCharge,
             totalPrice: finalTotal,
-            couponUsed: discount > 0 ? appliedCouponCode : null
+            couponUsed: discount > 0 ? appliedCouponCode : null,
+            restaurant: cartItems[0]?.restaurant?.id || null
         };
 
         try {

@@ -151,6 +151,7 @@ const DashboardPage = () => {
                                 <div className="flex justify-between items-start">
                                     <div>
                                         <h4 className="font-semibold text-gray-900" onClick={() => viewOrderDetails(order)}>Order #{order._id.substring(0, 8)}</h4>
+                                        <p className="font-bold text-orange-600 text-sm">{order.restaurant ? order.restaurant.name : 'Restaurant'}</p>
                                         <p className="text-gray-600 text-sm" onClick={() => viewOrderDetails(order)}>{order.items.map(i => i.name).slice(0, 2).join(', ')}</p>
                                         <p className="text-gray-500 text-sm">{new Date(order.createdAt).toLocaleString()}</p>
                                     </div>
@@ -188,6 +189,9 @@ const DashboardPage = () => {
             <Modal show={!!selectedOrder} onClose={closeOrderDetails} title={`Order Details #${selectedOrder?._id.substring(0, 8)}`}>
                 {selectedOrder && (
                     <div className="order-details">
+                        <p className="text-lg font-semibold mb-2">
+                            From: <span className="text-orange-600">{selectedOrder.restaurant ? selectedOrder.restaurant.name : 'Restaurant'}</span>
+                        </p>
                         {selectedOrder.items.map(item => (
                             <div key={item.name} className="order-item">
                                 <span>{item.name} (x{item.quantity})</span>

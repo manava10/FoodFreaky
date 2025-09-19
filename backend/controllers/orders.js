@@ -14,15 +14,21 @@ exports.createOrder = async (req, res) => {
             taxPrice, 
             shippingPrice, 
             totalPrice,
-            couponUsed
+            couponUsed,
+            restaurant // new field
         } = req.body;
 
         if (!items || items.length === 0) {
             return res.status(400).json({ msg: 'No order items' });
         }
+        
+        if (!restaurant) {
+            return res.status(400).json({ msg: 'Restaurant ID is required' });
+        }
 
         const order = new Order({
             user: req.user.id,
+            restaurant, // new field
             items,
             shippingAddress,
             itemsPrice,
@@ -50,7 +56,9 @@ exports.createOrder = async (req, res) => {
 // @route   GET /api/orders/myorders
 // @access  Private
 exports.getMyOrders = async (req, res) => {
-    const orders = await Order.find({ user: req.user.id }).sort({ createdAt: -1 });
+    const orders = await Order.find({ user: req.user.id })
+        .populate('restaurant', 'name')
+        .sort({ createdAt: -1 });
     res.json({ success: true, count: orders.length, data: orders });
 };
 

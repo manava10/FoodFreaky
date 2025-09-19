@@ -67,6 +67,7 @@ const OrderManager = ({ orders, setOrders, loading }) => {
                                     <div key={order._id} className="admin-order-card">
                                         <div className="order-details">
                                             <h2 className="order-id">Order #{order._id.substring(0, 8)}</h2>
+                                            <p><strong>Restaurant:</strong> {order.restaurant ? order.restaurant.name : 'N/A'}</p>
                                             <p><strong>User:</strong> {order.user.name} ({order.user.email})</p>
                                             {order.user.contactNumber && <p><strong>Phone:</strong> {order.user.contactNumber}</p>}
                                             <p><strong>Address:</strong> {order.shippingAddress}</p>
