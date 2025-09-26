@@ -109,5 +109,4 @@ const CouponManager = () => {
         </div>
     );
 };
-
 export default CouponManager;

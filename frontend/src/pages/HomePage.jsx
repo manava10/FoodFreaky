@@ -29,11 +29,14 @@ const HomePage = () => {
 
             <Header />
 
-            {/* Promotional Banner */}
-            <div className="absolute top-20 left-0 right-0 z-10 bg-orange-100 text-center py-2 px-4 shadow-md">
-                <p className="text-sm text-orange-800">
-                    Want to add your restaurant? Email us at <a href="mailto:support@foodfreaky.in" className="font-bold underline hover:text-orange-600">support@foodfreaky.in</a>!
-                </p>
+            {/* Banners */}
+            <div className="absolute top-20 left-0 right-0 z-10 text-center shadow-md">
+                {/* Service Hours Banner */}
+                <div className="bg-blue-100 py-2 px-4">
+                    <p className="text-sm text-blue-800 font-semibold">
+                        We only serve on Saturday, Sunday, and Monday evenings.
+                    </p>
+                </div>
             </div>
 
             {/* Main Content */}
@@ -55,7 +58,7 @@ const HomePage = () => {
             </main>
 
             {/* Footer */}
-            <footer className="relative z-10 bg-black bg-opacity-60 text-white py-6">
+            <footer className="relative z-10 bg-black bg-opacity-60 text-white py-0">
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="flex flex-col md:flex-row items-center justify-between">
                         <div className="mb-4 md:mb-0">
@@ -83,8 +86,8 @@ const HomePage = () => {
                         </div>
                     </div>
 
-                    <div className="border-t border-gray-600 mt-3 pt-3 text-center">
-                        <p className="text-gray-400">
+                    <div className="border-t border-gray-600 mt-2 pt-2 text-center">
+                        <p className="text-gray-400 text-sm">
                             © 2025 FoodFreaky. All rights reserved. | Made with ❤️ for food lovers
                         </p>
                     </div>

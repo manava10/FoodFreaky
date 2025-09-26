@@ -1,5 +1,6 @@
 const Order = require('../models/Order');
 const Coupon = require('../models/Coupon');
+const Restaurant = require('../models/Restaurant');
 const PDFDocument = require('pdfkit');
 
 // @desc    Create new order
@@ -90,6 +91,56 @@ exports.cancelOrder = async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ msg: 'Server Error' });
+    }
+};
+
+// @desc    Rate an order
+// @route   PUT /api/orders/:id/rate
+// @access  Private
+exports.rateOrder = async (req, res) => {
+    const { rating, review } = req.body;
+
+    try {
+        const order = await Order.findById(req.params.id);
+
+        if (!order) {
+            return res.status(404).json({ msg: 'Order not found' });
+        }
+
+        if (order.user.toString() !== req.user.id) {
+            return res.status(401).json({ msg: 'Not authorized to rate this order' });
+        }
+
+        if (order.status !== 'Delivered') {
+            return res.status(400).json({ msg: 'Order must be delivered to be rated' });
+        }
+
+        if (order.rating) {
+            return res.status(400).json({ msg: 'Order already rated' });
+        }
+
+        order.rating = rating;
+        order.review = review;
+
+        await order.save();
+
+        // Update restaurant average rating
+        const restaurant = await Restaurant.findById(order.restaurant);
+
+        const totalRating = restaurant.averageRating * restaurant.numberOfReviews;
+        const newNumberOfReviews = restaurant.numberOfReviews + 1;
+        const newAverageRating = (totalRating + rating) / newNumberOfReviews;
+
+        restaurant.averageRating = newAverageRating;
+        restaurant.numberOfReviews = newNumberOfReviews;
+
+        await restaurant.save();
+
+        res.json({ msg: 'Order rated successfully' });
+
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).send('Server Error');
     }
 };
 

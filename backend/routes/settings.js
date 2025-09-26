@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { getOrderingStatus } = require('../controllers/settings');
+const { getAppSettings } = require('../controllers/settings');
 
-// @desc    Get the current ordering status
-// @route   GET /api/settings/ordering
+// @desc    Get all app settings
+// @route   GET /api/settings
 // @access  Public
-router.get('/ordering', getOrderingStatus);
+router.get('/', getAppSettings);
 
 module.exports = router;

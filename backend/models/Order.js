@@ -55,6 +55,14 @@ const OrderSchema = new mongoose.Schema({
         type: Date,
         default: Date.now,
     },
+    rating: {
+        type: Number,
+        min: 1,
+        max: 5,
+    },
+    review: {
+        type: String,
+    },
 });
 
 module.exports = mongoose.model('Order', OrderSchema);

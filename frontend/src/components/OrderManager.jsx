@@ -74,6 +74,12 @@ const OrderManager = ({ orders, setOrders, loading }) => {
                                             <p><strong>Total:</strong> ₹{order.totalPrice.toFixed(2)}</p>
                                             <p><strong>Status:</strong> <span className={`status-badge status-${order.status.toLowerCase().replace(/\s+/g, '-')}`}>{order.status}</span></p>
                                             <p><strong>Date:</strong> {new Date(order.createdAt).toLocaleString()}</p>
+                                            {order.rating && (
+                                                <div className="mt-2">
+                                                    <p><strong>Rating:</strong> {order.rating}/5</p>
+                                                    <p><strong>Review:</strong> {order.review}</p>
+                                                </div>
+                                            )}
                                             <div className="order-items-summary">
                                                 <strong>Items:</strong>
                                                 <ul>

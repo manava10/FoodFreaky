@@ -10,6 +10,10 @@ const SettingSchema = new mongoose.Schema({
     isOrderingEnabled: {
         type: Boolean,
         default: true
+    },
+    orderClosingTime: {
+        type: String, // Storing as "HH:MM"
+        default: "22:00" // Default to 10 PM
     }
 });
 

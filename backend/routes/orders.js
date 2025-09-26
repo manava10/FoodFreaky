@@ -4,7 +4,8 @@ const {
     createOrder,
     getMyOrders,
     cancelOrder,
-    getOrderInvoice
+    getOrderInvoice,
+    rateOrder,
 } = require('../controllers/orders');
 const { protect } = require('../middleware/auth');
 
@@ -15,5 +16,6 @@ router.route('/').post(createOrder);
 router.route('/myorders').get(getMyOrders);
 router.route('/:id/cancel').put(cancelOrder);
 router.route('/:id/invoice').get(getOrderInvoice);
+router.route('/:id/rate').put(rateOrder);
 
 module.exports = router;

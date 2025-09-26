@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Modal from '../components/Modal';
+import SuccessModal from '../components/SuccessModal';
 import { useAuth } from '../context/AuthContext';
 import Header from '../components/Header';
+import Rating from '../components/Rating'; // Assuming you have a Rating component
 import './DashboardPage.css';
 import foodBackground from '../assets/images/food-background.jpg';
 
@@ -11,6 +13,11 @@ const DashboardPage = () => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedOrder, setSelectedOrder] = useState(null);
+    const [ratingModalOpen, setRatingModalOpen] = useState(false);
+    const [selectedOrderForRating, setSelectedOrderForRating] = useState(null);
+    const [rating, setRating] = useState(0);
+    const [review, setReview] = useState('');
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
 
     useEffect(() => {
         const fetchOrders = async () => {
@@ -34,6 +41,49 @@ const DashboardPage = () => {
     
     const viewOrderDetails = (order) => setSelectedOrder(order);
     const closeOrderDetails = () => setSelectedOrder(null);
+
+    const openRatingModal = (order) => {
+        setSelectedOrderForRating(order);
+        setRatingModalOpen(true);
+    };
+
+    const closeRatingModal = () => {
+        setRatingModalOpen(false);
+        setSelectedOrderForRating(null);
+        setRating(0);
+        setReview('');
+    };
+
+    const handleRatingSubmit = async () => {
+        if (rating === 0) {
+            alert('Please select a rating.');
+            return;
+        }
+
+        try {
+            const config = {
+                headers: { Authorization: `Bearer ${authToken}` },
+            };
+            await axios.put(
+                `${process.env.REACT_APP_API_URL}/api/orders/${selectedOrderForRating._id}/rate`,
+                { rating, review },
+                config
+            );
+            
+            setOrders(prevOrders => 
+                prevOrders.map(order => 
+                    order._id === selectedOrderForRating._id ? { ...order, rating, review } : order
+                )
+            );
+
+            closeRatingModal();
+            setShowSuccessModal(true);
+
+        } catch (error) {
+            const errorMsg = error.response?.data?.msg || "Failed to submit rating.";
+            alert(errorMsg);
+        }
+    };
     
     const handleCancelOrder = async (orderId) => {
         if (!window.confirm("Are you sure you want to cancel this order?")) {
@@ -169,6 +219,17 @@ const DashboardPage = () => {
                                                         Cancel Order
                                                     </button>
                                             )}
+                                            {order.status === 'Delivered' && !order.rating && (
+                                                <button 
+                                                    className="rate-order-btn"
+                                                    onClick={() => openRatingModal(order)}
+                                                >
+                                                    Rate Order
+                                                </button>
+                                            )}
+                                            {order.status === 'Delivered' && order.rating && (
+                                                <Rating value={order.rating} />
+                                            )}
                                             {order.status === 'Delivered' && (
                                                     <button 
                                                         className="download-invoice-btn"
@@ -206,6 +267,52 @@ const DashboardPage = () => {
                     </div>
                 )}
             </Modal>
+            
+            <Modal show={ratingModalOpen} onClose={closeRatingModal} title="Rate Your Order">
+                {selectedOrderForRating && (
+                    <div className="rating-modal">
+                        <p>How was your experience with {selectedOrderForRating.restaurant.name}?</p>
+                        <div className="my-4">
+                            <label className="block text-sm font-medium text-gray-700">Your Rating</label>
+                            {/* This is a simplified rating input. You can replace with a star component */}
+                            <select value={rating} onChange={(e) => setRating(Number(e.target.value))} className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm rounded-md">
+                                <option value="0" disabled>Select rating</option>
+                                <option value="1">1 - Poor</option>
+                                <option value="2">2 - Fair</option>
+                                <option value="3">3 - Good</option>
+                                <option value="4">4 - Very Good</option>
+                                <option value="5">5 - Excellent</option>
+                            </select>
+                        </div>
+                        <div className="my-4">
+                            <label htmlFor="review" className="block text-sm font-medium text-gray-700">Your Review</label>
+                            <textarea
+                                id="review"
+                                name="review"
+                                rows="3"
+                                value={review}
+                                onChange={(e) => setReview(e.target.value)}
+                                className="shadow-sm focus:ring-orange-500 focus:border-orange-500 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
+                                placeholder="Tell us more about your experience..."
+                            ></textarea>
+                        </div>
+                        <div className="mt-4 flex justify-end">
+                            <button onClick={handleRatingSubmit} className="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600">
+                                Submit Review
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </Modal>
+            
+            <SuccessModal
+                show={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                title="Thank You!"
+                message="Your review has been submitted successfully."
+                buttonText="Close"
+                onButtonClick={() => setShowSuccessModal(false)}
+            />
         </div>
     );
 };

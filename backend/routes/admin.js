@@ -10,7 +10,7 @@ const {
     updateMenuItem,
     addMenuItem
 } = require('../controllers/restaurantsAdmin');
-const { updateOrderingStatus } = require('../controllers/settings');
+const { updateSettings } = require('../controllers/settings');
 const { protect, authorize } = require('../middleware/auth');
 
 // Note: All routes in this file are automatically prefixed with /api/admin
@@ -22,8 +22,8 @@ router.route('/orders/:id')
     .put(protect, authorize('admin', 'deliveryadmin'), updateOrderStatus);
     
 // Settings Management (for admin ONLY)
-router.route('/settings/ordering')
-    .put(protect, authorize('admin'), updateOrderingStatus);
+router.route('/settings')
+    .put(protect, authorize('admin'), updateSettings);
 
 // Coupon Management Routes (for admin ONLY)
 router.route('/coupons')

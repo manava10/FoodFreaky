@@ -6,8 +6,66 @@ import { useSettings } from '../context/SettingsContext';
 import { useNavigate } from 'react-router-dom';
 import Modal from '../components/Modal';
 import Header from '../components/Header';
+import Rating from '../components/Rating'; // Import the Rating component
 import './RestaurantPage.css';
 import foodBackground from '../assets/images/food-background.jpg';
+
+const CountdownTimer = ({ closingTime }) => {
+    const calculateTimeLeft = () => {
+        const [hours, minutes] = closingTime.split(':');
+        const now = new Date();
+        const deadline = new Date();
+        deadline.setHours(hours, minutes, 0, 0);
+
+        if (now > deadline) {
+            // If past closing time, maybe show "Closed" or calculate for next day
+            return { hours: 0, minutes: 0, seconds: 0 };
+        }
+
+        const difference = deadline - now;
+        let timeLeft = {};
+
+        if (difference > 0) {
+            timeLeft = {
+                hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+                minutes: Math.floor((difference / 1000 / 60) % 60),
+                seconds: Math.floor((difference / 1000) % 60),
+            };
+        }
+
+        return timeLeft;
+    };
+
+    const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setTimeLeft(calculateTimeLeft());
+        }, 1000);
+
+        return () => clearTimeout(timer);
+    });
+
+    const timerComponents = [];
+    Object.keys(timeLeft).forEach((interval) => {
+        if (!timeLeft[interval] && interval !== 'seconds' && timeLeft['hours'] === 0 && timeLeft['minutes'] < 10) {
+            return;
+        }
+        timerComponents.push(
+            <span key={interval}>
+                {String(timeLeft[interval]).padStart(2, '0')}
+                {interval[0]}{' '}
+            </span>
+        );
+    });
+
+    return (
+        <div className="bg-red-600 text-white text-center p-3 font-semibold shadow-lg">
+            Ordering closes in: {timerComponents.length ? timerComponents : <span>Time's up!</span>}
+        </div>
+    );
+};
+
 
 function RestaurantPage() {
     const [restaurants, setRestaurants] = useState([]);
@@ -19,7 +77,7 @@ function RestaurantPage() {
     
     const { addToCart, increaseQuantity, decreaseQuantity, cartItems } = useCart();
     const { isLoggedIn } = useAuth();
-    const { isOrderingEnabled, isLoadingSettings } = useSettings();
+    const { settings, isLoadingSettings } = useSettings();
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -63,7 +121,7 @@ function RestaurantPage() {
     };
 
     const NotAcceptingOrdersBanner = () => {
-        if (isLoadingSettings || isOrderingEnabled) {
+        if (isLoadingSettings || settings.isOrderingEnabled) {
             return null;
         }
         return (
@@ -79,6 +137,7 @@ function RestaurantPage() {
             
             <Header />
             <NotAcceptingOrdersBanner />
+            { !isLoadingSettings && settings.isOrderingEnabled && <CountdownTimer closingTime={settings.orderClosingTime} /> }
 
             <main className="max-w-7xl mx-auto px-4 py-8 relative z-10">
                 
@@ -117,7 +176,8 @@ function RestaurantPage() {
                                              <p className="text-gray-600">{restaurant.cuisine}</p>
                                          </div>
                                          
-                                         <div className="flex items-center text-sm text-gray-500 mb-4">
+                                         <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+                                             <Rating value={restaurant.averageRating} text={`${restaurant.numberOfReviews} reviews`} />
                                              <span className="flex items-center">
                                                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -147,6 +207,8 @@ function RestaurantPage() {
                             <div>
                                 <h2 className="text-3xl font-bold text-white drop-shadow-lg">{selectedRestaurant.name}</h2>
                                 <div className="flex items-center text-sm text-gray-200 mt-1">
+                                    <Rating value={selectedRestaurant.averageRating} text={`${selectedRestaurant.numberOfReviews} reviews`} />
+                                    <span className="mx-2">·</span>
                                     <span>{selectedRestaurant.deliveryTime} delivery</span>
                                 </div>
                             </div>
@@ -178,22 +240,22 @@ function RestaurantPage() {
                                                     <button 
                                                         onClick={() => handleAddToCart(item, selectedRestaurant)} 
                                                         className="add-to-cart-btn"
-                                                        disabled={!isOrderingEnabled || isLoadingSettings}
+                                                        disabled={!settings.isOrderingEnabled || isLoadingSettings}
                                                     >
-                                                        {isOrderingEnabled ? 'ADD' : 'CLOSED'}
+                                                        {settings.isOrderingEnabled ? 'ADD' : 'CLOSED'}
                                                     </button>
                                                 ) : (
                                                     <div className="quantity-control">
                                                         <button 
                                                             onClick={() => decreaseQuantity(item.name)} 
                                                             className="quantity-btn"
-                                                            disabled={!isOrderingEnabled || isLoadingSettings}
+                                                            disabled={!settings.isOrderingEnabled || isLoadingSettings}
                                                         >-</button>
                                                         <span className="quantity-display">{getItemQuantity(item.name)}</span>
                                                         <button 
                                                             onClick={() => increaseQuantity(item.name)} 
                                                             className="quantity-btn"
-                                                            disabled={!isOrderingEnabled || isLoadingSettings}
+                                                            disabled={!settings.isOrderingEnabled || isLoadingSettings}
                                                         >+</button>
                                                     </div>
                                                 )}

@@ -41,6 +41,14 @@ const RestaurantSchema = new mongoose.Schema({
         type: String,
     },
     menu: [MenuSchema],
+    averageRating: {
+        type: Number,
+        default: 0,
+    },
+    numberOfReviews: {
+        type: Number,
+        default: 0,
+    },
 }, {
     timestamps: true,
 });

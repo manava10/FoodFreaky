@@ -12,8 +12,20 @@ const generateToken = (id) => {
     });
 };
 
+// @desc    Register user
+// @route   POST /api/auth/register
+// @access  Public
 exports.register = async (req, res) => {
     const { name, email, password, contactNumber } = req.body;
+
+    // Email domain validation
+    const allowedDomains = ['gmail.com', 'vitapstudent.ac.in'];
+    const emailDomain = email.split('@')[1];
+
+    if (!allowedDomains.includes(emailDomain)) {
+        return res.status(400).json({ msg: 'Registration is only allowed for @gmail.com and @vitapstudent.ac.in emails.' });
+    }
+
     try {
         let user = await User.findOne({ email });
         if (user && user.isVerified) {

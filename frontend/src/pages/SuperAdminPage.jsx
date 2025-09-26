@@ -91,6 +91,9 @@ const SuperAdminPage = () => {
                                                 <p><strong>User:</strong> {order.user.name}</p>
                                                 <p><strong>Total:</strong> ₹{order.totalPrice.toFixed(2)}</p>
                                                 <p><strong>Status:</strong> <span className={`status-badge status-${order.status.toLowerCase().replace(/\s+/g, '-')}`}>{order.status}</span></p>
+                                                {order.rating && (
+                                                    <p><strong>Rating:</strong> {order.rating}/5</p>
+                                                )}
                                             </div>
                                         </div>
                                     )
