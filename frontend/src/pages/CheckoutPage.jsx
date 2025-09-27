@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
@@ -11,7 +11,7 @@ import './CheckoutPage.css';
 const CheckoutPage = () => {
     const { cartItems, cartTotal, clearCart } = useCart();
     const { user, authToken } = useAuth();
-    const { isOrderingEnabled, isLoadingSettings } = useSettings();
+    const { settings, isLoadingSettings } = useSettings();
     const navigate = useNavigate();
 
     const [address, setAddress] = useState('');
@@ -31,15 +31,15 @@ const CheckoutPage = () => {
         }
     }, [user]);
 
-    // Recalculate discount if cart total changes
-    useEffect(() => {
-        if (appliedCouponCode) {
-            handleApplyCoupon(true); // Pass flag to indicate recalculation
-        }
-    }, [cartTotal]);
+    const handleRemoveCoupon = useCallback(() => {
+        setDiscount(0);
+        setCouponCode('');
+        setAppliedCouponCode('');
+        setCouponError('');
+    }, []);
 
-    const handleApplyCoupon = async (isRecalculation = false) => {
-        const codeToValidate = isRecalculation ? appliedCouponCode : couponCode;
+    const handleApplyCoupon = useCallback(async (code, isRecalculation = false) => {
+        const codeToValidate = code;
         if (!codeToValidate) {
             if (!isRecalculation) setCouponError('Please enter a coupon code.');
             return;
@@ -69,7 +69,7 @@ const CheckoutPage = () => {
 
             setDiscount(calculatedDiscount);
             if (!isRecalculation) {
-                setAppliedCouponCode(couponCode); // Store applied coupon
+                setAppliedCouponCode(codeToValidate); // Store applied coupon
                 setCouponCode(''); // Clear input
                 setCouponSuccess(true); // Open success modal
             }
@@ -84,14 +84,14 @@ const CheckoutPage = () => {
         } finally {
             setIsApplyingCoupon(false);
         }
-    };
+    }, [cartTotal, handleRemoveCoupon]);
 
-    const handleRemoveCoupon = () => {
-        setDiscount(0);
-        setCouponCode('');
-        setAppliedCouponCode('');
-        setCouponError('');
-    };
+    // Recalculate discount if cart total changes
+    useEffect(() => {
+        if (appliedCouponCode) {
+            handleApplyCoupon(appliedCouponCode, true); // Pass flag to indicate recalculation
+        }
+    }, [cartTotal, appliedCouponCode, handleApplyCoupon]);
     
     const subtotal = cartTotal;
 
@@ -155,7 +155,7 @@ const CheckoutPage = () => {
         return <div className="text-center p-8 text-white">Loading...</div>;
     }
 
-    if (!isOrderingEnabled) {
+    if (!settings.isOrderingEnabled) {
         return (
             <div className="checkout-page-container">
                 <div className="fixed inset-0 bg-black bg-opacity-60 z-0"></div>
@@ -238,7 +238,7 @@ const CheckoutPage = () => {
                                         disabled={isApplyingCoupon}
                                     />
                                     <button 
-                                        onClick={() => handleApplyCoupon(false)} 
+                                        onClick={() => handleApplyCoupon(couponCode, false)} 
                                         className="coupon-btn"
                                         disabled={isApplyingCoupon || !couponCode}
                                     >
