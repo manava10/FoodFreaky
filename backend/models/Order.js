@@ -65,4 +65,11 @@ const OrderSchema = new mongoose.Schema({
     },
 });
 
+// Indexes for better query performance
+OrderSchema.index({ user: 1 });
+OrderSchema.index({ restaurant: 1 });
+OrderSchema.index({ status: 1 });
+OrderSchema.index({ createdAt: -1 });
+OrderSchema.index({ user: 1, createdAt: -1 });
+
 module.exports = mongoose.model('Order', OrderSchema);

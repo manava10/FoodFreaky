@@ -49,6 +49,12 @@ const UserSchema = new mongoose.Schema({
     },
 });
 
+// Indexes for better query performance
+UserSchema.index({ email: 1 });
+UserSchema.index({ resetPasswordToken: 1 });
+UserSchema.index({ otp: 1, otpExpires: 1 });
+UserSchema.index({ role: 1 });
+
 // Encrypt password using bcrypt
 UserSchema.pre('save', async function(next) {
     if (!this.isModified('password')) {

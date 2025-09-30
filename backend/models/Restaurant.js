@@ -53,4 +53,10 @@ const RestaurantSchema = new mongoose.Schema({
     timestamps: true,
 });
 
+// Indexes for better query performance
+RestaurantSchema.index({ name: 1 });
+RestaurantSchema.index({ cuisine: 1 });
+RestaurantSchema.index({ tags: 1 });
+RestaurantSchema.index({ averageRating: -1 });
+
 module.exports = mongoose.model('Restaurant', RestaurantSchema);
