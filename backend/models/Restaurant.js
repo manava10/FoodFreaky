@@ -54,7 +54,7 @@ const RestaurantSchema = new mongoose.Schema({
 });
 
 // Indexes for better query performance
-RestaurantSchema.index({ name: 1 });
+// Note: name already has unique:true which creates an index
 RestaurantSchema.index({ cuisine: 1 });
 RestaurantSchema.index({ tags: 1 });
 RestaurantSchema.index({ averageRating: -1 });
