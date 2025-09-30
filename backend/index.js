@@ -1,7 +1,10 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
+const { errorHandler } = require('./middleware/errorHandler');
+const { apiLimiter } = require('./middleware/rateLimit');
 
 // Load environment variables
 dotenv.config();
@@ -17,6 +20,12 @@ const admin = require('./routes/admin');
 const settings = require('./routes/settings');
 
 const app = express();
+
+// Security middleware
+app.use(helmet());
+
+// Rate limiting for all routes
+app.use(apiLimiter);
 
 // Middleware
 const allowedOrigins = [
@@ -62,6 +71,9 @@ app.get('/health', (req, res) => {
 app.get('/', (req, res) => {
     res.send('Welcome to the FoodFreaky API!');
 });
+
+// Global error handler (must be after all routes)
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 5001;
 const server = app.listen(PORT, () => {
