@@ -36,13 +36,13 @@ class ErrorBoundary extends React.Component {
     // logErrorToService(error, errorInfo);
   }
 
-  handleReload = () => {
+  handleReload() {
     window.location.reload();
-  };
+  }
 
-  handleGoHome = () => {
+  handleGoHome() {
     window.location.href = '/';
-  };
+  }
 
   render() {
     if (this.state.hasError) {
@@ -68,13 +68,13 @@ class ErrorBoundary extends React.Component {
 
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <button
-                  onClick={this.handleReload}
+                  onClick={this.handleReload.bind(this)}
                   className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg transition-colors duration-200"
                 >
                   Reload Page
                 </button>
                 <button
-                  onClick={this.handleGoHome}
+                  onClick={this.handleGoHome.bind(this)}
                   className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors duration-200"
                 >
                   Go to Home
