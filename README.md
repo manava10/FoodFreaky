@@ -367,6 +367,30 @@ The application uses Tailwind CSS for styling with:
 4. Add tests if applicable
 5. Submit a pull request
 
+## 📚 Documentation
+
+### For Learning & Understanding
+- **[Complete Guide](docs/COMPLETE_GUIDE.md)** - 📘 **NEW! Start here to learn everything from basics to advanced** (3,275+ lines)
+  - Architecture overview with diagrams
+  - Request-response flow explained
+  - Frontend & backend deep dives
+  - Authentication & security patterns
+  - Complete code walkthroughs
+  - Best practices and troubleshooting
+
+### For Reference
+- [API Documentation](docs/API.md) - API endpoints and usage
+- [Backend Architecture](docs/BACKEND.md) - Backend structure and patterns
+- [Frontend Architecture](docs/FRONTEND.md) - Frontend structure and components
+- [Database Schema](docs/DATABASE.md) - Database models and relationships
+
+### For Implementation
+- [Summary](docs/SUMMARY.md) - Quick overview of improvements
+- [Implementation Guide](docs/IMPLEMENTATION_GUIDE.md) - Step-by-step guide
+- [Improvements](docs/IMPROVEMENTS.md) - Detailed improvement recommendations
+
+**New to the project?** Start with the [Complete Guide](docs/COMPLETE_GUIDE.md) to understand how everything works!
+
 ## 📄 License
 
 This project is private and proprietary.
