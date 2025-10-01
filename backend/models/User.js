@@ -50,7 +50,7 @@ const UserSchema = new mongoose.Schema({
 });
 
 // Indexes for better query performance
-UserSchema.index({ email: 1 });
+// Note: email already has unique:true which creates an index
 UserSchema.index({ resetPasswordToken: 1 });
 UserSchema.index({ otp: 1, otpExpires: 1 });
 UserSchema.index({ role: 1 });
