@@ -34,7 +34,7 @@ const HomePage = () => {
                 {/* Service Hours Banner */}
                 <div className="bg-blue-100 py-2 px-4">
                     <p className="text-sm text-blue-800 font-semibold">
-                        We only serve on Saturday, Sunday, and Monday evenings.
+                        We only serve on Saturday, Sunday, and Monday evenings. Orders open at 3:00 PM.
                     </p>
                 </div>
             </div>
