@@ -31,6 +31,12 @@ const HomePage = () => {
 
             {/* Banners */}
             <div className="absolute top-20 left-0 right-0 z-10 text-center shadow-md">
+                {/* Closure Notice Banner */}
+                <div className="bg-red-100 border-l-4 border-red-500 py-3 px-4 mb-2">
+                    <p className="text-sm text-red-800 font-semibold">
+                        🚫 FoodFreaky is closed today due to an overwhelming response — we're upgrading our systems and adding more delivery partners to serve you better!
+                    </p>
+                </div>
                 {/* Service Hours Banner */}
                 <div className="bg-blue-100 py-2 px-4">
                     <p className="text-sm text-blue-800 font-semibold">
