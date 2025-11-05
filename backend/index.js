@@ -4,7 +4,6 @@ const helmet = require('helmet');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 const { errorHandler } = require('./middleware/errorHandler');
-const { apiLimiter } = require('./middleware/rateLimit');
 
 // Load environment variables
 dotenv.config();
@@ -23,9 +22,6 @@ const app = express();
 
 // Security middleware
 app.use(helmet());
-
-// Rate limiting for all routes
-app.use(apiLimiter);
 
 // Middleware
 const allowedOrigins = [
