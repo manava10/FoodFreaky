@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import Header from '../components/Header';
 import './AdminPage.css';
 import Modal from '../components/Modal'; // Added Modal import
@@ -10,6 +11,7 @@ const EditRestaurantPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const { authToken } = useAuth();
+    const { showSuccess, showError: showToastError } = useToast();
     const [restaurant, setRestaurant] = useState(null);
     const [formData, setFormData] = useState({
         name: '',
@@ -92,11 +94,12 @@ const EditRestaurantPage = () => {
         const body = { ...formData, tags: formData.tags.split(',').map(tag => tag.trim()) };
         try {
             await axios.put(`${process.env.REACT_APP_API_URL}/api/admin/restaurants/${id}`, body, config);
-            alert('Restaurant updated successfully!');
-            navigate('/superadmin');
+            showSuccess('Restaurant updated successfully!');
+            setTimeout(() => navigate('/superadmin'), 1000); // Small delay to show toast
         } catch (err) {
             const errorMsg = err.response?.data?.msg || 'Failed to update restaurant.';
             setError(errorMsg);
+            showToastError(errorMsg);
         }
     };
 

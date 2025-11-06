@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import Header from '../components/Header';
+import { OrderListSkeleton } from '../components/OrderCardSkeleton';
+import { EmptyOrders } from '../components/EmptyState';
 import './AdminPage.css';
 
 const DeliveryAdminPage = () => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const { authToken } = useAuth();
+    const { showSuccess, showError } = useToast();
     const [statusUpdates, setStatusUpdates] = useState({});
 
     const orderStatuses = ['Waiting for Acceptance', 'Accepted', 'Preparing Food', 'Out for Delivery', 'Delivered', 'Cancelled'];
@@ -53,10 +57,10 @@ const DeliveryAdminPage = () => {
                     order._id === orderId ? { ...order, status: updatedOrder.status } : order
                 )
             );
-            alert('Order status updated successfully!');
+            showSuccess('Order status updated successfully!');
         } catch (error) {
             console.error('Failed to update order status:', error);
-            alert('Failed to update order status.');
+            showError('Failed to update order status.');
         }
     };
 
@@ -68,7 +72,9 @@ const DeliveryAdminPage = () => {
                 <h1 className="text-4xl font-bold text-white text-center mb-8">Delivery Admin Dashboard</h1>
                 
                 {loading ? (
-                    <p className="text-white text-center">Loading orders...</p>
+                    <div className="space-y-4">
+                        <OrderListSkeleton count={5} />
+                    </div>
                 ) : (
                     <div className="admin-order-list">
                         {orders.length > 0 ? orders.map(order => (
@@ -111,7 +117,7 @@ const DeliveryAdminPage = () => {
                                 </div>
                             )
                         )) : (
-                            <p className="text-white text-center">No orders found.</p>
+                            <EmptyOrders isAdmin={true} className="empty-state-transparent" />
                         )}
                     </div>
                 )}

@@ -6,6 +6,7 @@ import CouponManager from '../components/CouponManager';
 import RestaurantManager from '../components/RestaurantManager';
 import OrderManager from '../components/OrderManager';
 import SettingsManager from '../components/SettingsManager';
+import { AdminPageSkeleton } from '../components/AdminSkeleton';
 import './AdminPage.css';
 
 const SuperAdminPage = () => {
@@ -50,7 +51,7 @@ const SuperAdminPage = () => {
                 <h1 className="text-4xl font-bold text-white text-center mb-8">Super Admin Dashboard</h1>
                 
                 {loading ? (
-                    <p className="text-white text-center">Loading data...</p>
+                    <AdminPageSkeleton />
                 ) : (
                     <div className="space-y-8">
                         {/* Analytics Section */}

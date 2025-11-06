@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
+import { useToast } from '../context/ToastContext';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Header from '../components/Header';
@@ -12,6 +13,7 @@ const CheckoutPage = () => {
     const { cartItems, cartTotal, clearCart } = useCart();
     const { user, authToken } = useAuth();
     const { settings, isLoadingSettings } = useSettings();
+    const { showError, showSuccess } = useToast();
     const navigate = useNavigate();
 
     const [address, setAddress] = useState('');
@@ -112,7 +114,7 @@ const CheckoutPage = () => {
 
     const handlePlaceOrder = async () => {
         if (!address || !contactNumber) {
-            alert('Please fill in your address and contact number.');
+            showError('Please fill in your address and contact number.');
             return;
         }
         setIsPlacingOrder(true);
@@ -145,7 +147,7 @@ const CheckoutPage = () => {
 
         } catch (error) {
             console.error('Order placement error:', error);
-            alert('Failed to place order.');
+            showError('Failed to place order. Please try again.');
         } finally {
             setIsPlacingOrder(false);
         }

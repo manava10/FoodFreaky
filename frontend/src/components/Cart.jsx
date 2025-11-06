@@ -1,6 +1,7 @@
 import React from 'react';
 import { useCart } from '../context/CartContext';
 import { useNavigate } from 'react-router-dom';
+import { EmptyCart } from './EmptyState';
 import './Cart.css';
 
 const Cart = () => {
@@ -23,7 +24,10 @@ const Cart = () => {
                 </div>
                 <div className="cart-body">
                     {cartItems.length === 0 ? (
-                        <p className="empty-cart-message">Your cart is empty.</p>
+                        <EmptyCart onBrowseRestaurants={() => {
+                            closeCart();
+                            navigate('/restaurants');
+                        }} />
                     ) : (
                         <>
                             <div className="cart-restaurant-header">

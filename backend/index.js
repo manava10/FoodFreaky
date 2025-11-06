@@ -21,11 +21,15 @@ const settings = require('./routes/settings');
 const app = express();
 
 // Security middleware
-app.use(helmet());
+app.use(helmet({
+    contentSecurityPolicy: false, // Disable CSP for development
+    crossOriginResourcePolicy: { policy: "cross-origin" } // Allow cross-origin requests
+}));
 
 // Middleware
 const allowedOrigins = [
-    'http://localhost:3000',
+    'http://localhost:3000', // Previous local IP (if you reconnect)
+    'https://bid-womens-indices-subjects.trycloudflare.com', // Cloudflare tunnel frontend
     'https://cheerful-cannoli-94af42.netlify.app',
     'https://foodfreaky.in',
     'https://www.foodfreaky.in',

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import Header from '../components/Header';
 import './AuthPage.css'; // Changed to shared CSS
 import foodBackground from '../assets/images/food-background.jpg';
@@ -16,6 +17,7 @@ const LoginPage = () => {
     const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
     const { login, isLoggedIn } = useAuth();
+    const { showInfo } = useToast();
     const location = useLocation();
     const [successMessage, setSuccessMessage] = useState('');
 
@@ -83,7 +85,7 @@ const LoginPage = () => {
     };
 
     const handleGoogleLogin = () => {
-        alert('Google Login coming soon! 🚀');
+        showInfo('Google Login coming soon! 🚀');
     };
 
     const handleSignUp = () => {

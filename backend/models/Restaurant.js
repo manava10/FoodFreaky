@@ -49,6 +49,10 @@ const RestaurantSchema = new mongoose.Schema({
         type: Number,
         default: 0,
     },
+    isAcceptingOrders: {
+        type: Boolean,
+        default: true,
+    },
 }, {
     timestamps: true,
 });

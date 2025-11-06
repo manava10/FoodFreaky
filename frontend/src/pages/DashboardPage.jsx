@@ -1,15 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import Modal from '../components/Modal';
 import SuccessModal from '../components/SuccessModal';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import Header from '../components/Header';
 import Rating from '../components/Rating'; // Assuming you have a Rating component
+import { OrderListSkeleton } from '../components/OrderCardSkeleton';
+import { DashboardWelcomeSkeleton } from '../components/DashboardSkeleton';
+import { EmptyOrders } from '../components/EmptyState';
 import './DashboardPage.css';
 import foodBackground from '../assets/images/food-background.jpg';
 
 const DashboardPage = () => {
     const { user, authToken } = useAuth();
+    const { showError, showWarning, showSuccess } = useToast();
+    const navigate = useNavigate();
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedOrder, setSelectedOrder] = useState(null);
@@ -56,7 +63,7 @@ const DashboardPage = () => {
 
     const handleRatingSubmit = async () => {
         if (rating === 0) {
-            alert('Please select a rating.');
+            showWarning('Please select a rating.');
             return;
         }
 
@@ -81,7 +88,7 @@ const DashboardPage = () => {
 
         } catch (error) {
             const errorMsg = error.response?.data?.msg || "Failed to submit rating.";
-            alert(errorMsg);
+            showError(errorMsg);
         }
     };
     
@@ -102,7 +109,7 @@ const DashboardPage = () => {
             );
         } catch (error) {
             const errorMsg = error.response?.data?.msg || "Failed to cancel order. It may no longer be cancellable.";
-            alert(errorMsg);
+            showError(errorMsg);
         }
     };
 
@@ -133,7 +140,7 @@ const DashboardPage = () => {
             link.parentNode.removeChild(link); // Clean up the link
         } catch (error) {
             console.error('Failed to download invoice:', error);
-            alert('Could not download the invoice. Please try again later.');
+            showError('Could not download the invoice. Please try again later.');
         }
     };
 
@@ -160,7 +167,13 @@ const DashboardPage = () => {
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
                 {loading ? (
-                    <p className="text-white text-center">Loading dashboard...</p>
+                    <>
+                        <DashboardWelcomeSkeleton />
+                        <div className="space-y-4">
+                            <h2 className="text-2xl font-bold text-white mb-4">Your Orders</h2>
+                            <OrderListSkeleton count={3} />
+                        </div>
+                    </>
                 ) : user && (
                     <>
                         {/* Welcome Section */}
@@ -195,6 +208,12 @@ const DashboardPage = () => {
                 {/* Recent Orders */}
                 <div className="recent-orders-section">
                     <h2 className="text-xl md:text-2xl font-bold text-white mb-4">Recent Orders</h2>
+                    {orders.length === 0 ? (
+                        <EmptyOrders 
+                            onBrowseRestaurants={() => navigate('/restaurants')}
+                            className="empty-state-transparent"
+                        />
+                    ) : (
                     <div className="flex flex-col gap-6">
                         {orders.map(order => (
                             <div key={order._id} className="order-card p-4 rounded-lg shadow-md">
@@ -242,6 +261,7 @@ const DashboardPage = () => {
                             </div>
                         ))}
                     </div>
+                    )}
                 </div>
             </>
             )}

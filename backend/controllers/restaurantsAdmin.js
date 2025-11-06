@@ -1,5 +1,18 @@
 const Restaurant = require('../models/Restaurant');
 
+// @desc    Get all restaurants (for admins)
+// @route   GET /api/admin/restaurants
+// @access  Private (Admin)
+exports.getAllRestaurants = async (req, res) => {
+    try {
+        const restaurants = await Restaurant.find();
+        res.json({ success: true, data: restaurants });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ msg: 'Server Error' });
+    }
+};
+
 // @desc    Get a single restaurant by ID (for admins)
 // @route   GET /api/admin/restaurants/:id
 // @access  Private (Admin)
@@ -60,6 +73,32 @@ exports.deleteRestaurant = async (req, res) => {
         await restaurant.deleteOne();
         res.json({ success: true, data: {} });
     } catch (error) {
+        res.status(500).json({ msg: 'Server Error' });
+    }
+};
+
+// @desc    Toggle restaurant accepting orders status
+// @route   PUT /api/admin/restaurants/:id/accepting-orders
+// @access  Private (Admin)
+exports.toggleAcceptingOrders = async (req, res) => {
+    try {
+        const restaurant = await Restaurant.findById(req.params.id);
+        if (!restaurant) {
+            return res.status(404).json({ msg: 'Restaurant not found' });
+        }
+        
+        restaurant.isAcceptingOrders = !restaurant.isAcceptingOrders;
+        await restaurant.save();
+        
+        res.json({ 
+            success: true, 
+            data: restaurant,
+            message: restaurant.isAcceptingOrders 
+                ? 'Restaurant is now accepting orders' 
+                : 'Restaurant is no longer accepting orders'
+        });
+    } catch (error) {
+        console.error('Error toggling accepting orders:', error);
         res.status(500).json({ msg: 'Server Error' });
     }
 };

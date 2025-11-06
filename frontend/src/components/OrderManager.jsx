@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
+import { EmptyOrders } from './EmptyState';
 import '../pages/AdminPage.css'; // Corrected path
 
 const OrderManager = ({ orders, setOrders, loading }) => {
     const { authToken } = useAuth();
+    const { showSuccess, showError } = useToast();
     const [statusUpdates, setStatusUpdates] = useState({});
 
     const orderStatuses = ['Waiting for Acceptance', 'Accepted', 'Preparing Food', 'Out for Delivery', 'Delivered', 'Cancelled'];
@@ -28,10 +31,10 @@ const OrderManager = ({ orders, setOrders, loading }) => {
                     order._id === orderId ? { ...order, status: updatedOrder.status } : order
                 )
             );
-            alert('Order status updated successfully!');
+            showSuccess('Order status updated successfully!');
         } catch (error) {
             console.error('Failed to update order status:', error);
-            alert('Failed to update order status.');
+            showError('Failed to update order status.');
         }
     };
 
@@ -113,7 +116,7 @@ const OrderManager = ({ orders, setOrders, loading }) => {
                     </div>
                 ))
             ) : (
-                <p className="text-white text-center">No orders found.</p>
+                <EmptyOrders isAdmin={true} className="empty-state-transparent" />
             )}
         </div>
     );

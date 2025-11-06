@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
 const CouponManager = () => {
     const [coupons, setCoupons] = useState([]);
     const [loading, setLoading] = useState(true);
     const { authToken } = useAuth();
+    const { showError, showSuccess } = useToast();
     
     // Form state
     const [code, setCode] = useState('');
@@ -55,8 +57,11 @@ const CouponManager = () => {
             setCoupons([data.data, ...coupons]);
             // Clear form
             setCode(''); setDiscountType('percentage'); setValue(''); setExpiresAt(''); setUsageLimit('');
+            showSuccess('Coupon created successfully!');
         } catch (err) {
-            setError(err.response?.data?.msg || 'Failed to create coupon');
+            const errorMsg = err.response?.data?.msg || 'Failed to create coupon';
+            setError(errorMsg);
+            showError(errorMsg);
         }
     };
 
@@ -66,8 +71,9 @@ const CouponManager = () => {
                 const config = { headers: { Authorization: `Bearer ${authToken}` } };
                 await axios.delete(`${process.env.REACT_APP_API_URL}/api/admin/coupons/${id}`, config);
                 setCoupons(coupons.filter(c => c._id !== id));
+                showSuccess('Coupon deleted successfully!');
             } catch (err) {
-                alert('Failed to delete coupon');
+                showError('Failed to delete coupon.');
             }
         }
     };

@@ -1,0 +1,136 @@
+/* Empty State Styles */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 3rem 2rem;
+    border-radius: 1rem;
+}
+
+.empty-state-small {
+    padding: 2rem 1.5rem;
+}
+
+.empty-state-medium {
+    padding: 3rem 2rem;
+}
+
+.empty-state-large {
+    padding: 4rem 2rem;
+}
+
+/* Icon */
+.empty-state-icon {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+    animation: float 3s ease-in-out infinite;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+}
+
+.empty-state-small .empty-state-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.empty-state-large .empty-state-icon {
+    font-size: 5rem;
+    margin-bottom: 2rem;
+}
+
+/* Title */
+.empty-state-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 0.75rem;
+    line-height: 1.3;
+}
+
+.empty-state-small .empty-state-title {
+    font-size: 1.25rem;
+}
+
+.empty-state-large .empty-state-title {
+    font-size: 1.875rem;
+}
+
+/* Message */
+.empty-state-message {
+    font-size: 1rem;
+    color: #6b7280;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+    max-width: 500px;
+}
+
+.empty-state-small .empty-state-message {
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+}
+
+.empty-state-large .empty-state-message {
+    font-size: 1.125rem;
+    margin-bottom: 2rem;
+}
+
+/* Action Button */
+.empty-state-action {
+    background: linear-gradient(to right, #f97316, #ea580c);
+    color: white;
+    font-weight: 600;
+    padding: 0.75rem 2rem;
+    border-radius: 0.5rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(249, 115, 22, 0.3);
+    font-size: 1rem;
+}
+
+.empty-state-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(249, 115, 22, 0.4);
+    background: linear-gradient(to right, #ea580c, #c2410c);
+}
+
+.empty-state-action:active {
+    transform: translateY(0);
+}
+
+/* Dark Mode Support */
+.dark .empty-state-title {
+    color: #f9fafb;
+}
+
+.dark .empty-state-message {
+    color: #d1d5db;
+}
+
+/* Floating Animation */
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+/* White Background Variant */
+.empty-state-white {
+    background: white;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.empty-state-white-bg {
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Transparent Variant */
+.empty-state-transparent {
+    background: transparent;
+}
+

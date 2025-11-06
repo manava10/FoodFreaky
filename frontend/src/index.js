@@ -6,6 +6,7 @@ import reportWebVitals from './reportWebVitals';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
 import { SettingsProvider } from './context/SettingsContext';
+import { ToastProvider } from './context/ToastContext';
 import { BrowserRouter as Router } from 'react-router-dom';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
@@ -14,9 +15,11 @@ root.render(
     <Router>
       <AuthProvider>
         <SettingsProvider>
-          <CartProvider>
-            <App />
-          </CartProvider>
+          <ToastProvider>
+            <CartProvider>
+              <App />
+            </CartProvider>
+          </ToastProvider>
         </SettingsProvider>
       </AuthProvider>
     </Router>

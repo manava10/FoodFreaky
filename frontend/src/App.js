@@ -1,5 +1,5 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Routes, Route } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import RestaurantPage from './pages/RestaurantPage';
 import RegisterPage from './pages/RegisterPage';
@@ -14,8 +14,21 @@ import ResetPasswordPage from './pages/ResetPasswordPage';
 import ProtectedRoute from './ProtectedRoute';
 import AdminRoute from './AdminRoute';
 import Cart from './components/Cart';
+import { useToast } from './context/ToastContext';
 
-function App() {
+function AppContent() {
+  const { showWarning } = useToast();
+
+  useEffect(() => {
+    // Listen for inactivity logout event from AuthContext
+    const handleInactivity = (event) => {
+      showWarning(event.detail.message);
+    };
+
+    window.addEventListener('userInactivity', handleInactivity);
+    return () => window.removeEventListener('userInactivity', handleInactivity);
+  }, [showWarning]);
+
   return (
     <>
       <Cart />
@@ -69,6 +82,10 @@ function App() {
       </Routes>
     </>
   );
+}
+
+function App() {
+  return <AppContent />;
 }
 
 export default App;

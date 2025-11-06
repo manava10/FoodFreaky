@@ -2,6 +2,9 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 
+// Note: Toast notifications can't be used here because AuthContext wraps ToastProvider
+// For inactivity logout, we'll dispatch a custom event that components can listen to
+
 const AuthContext = createContext();
 
 export const useAuth = () => {
@@ -43,7 +46,10 @@ export const AuthProvider = ({ children }) => {
                 // If user is inactive for 5 minutes, log them out
                 if (isLoggedIn) {
                     logout();
-                    alert("You have been logged out due to inactivity.");
+                    // Dispatch event for toast notification (components can listen to this)
+                    window.dispatchEvent(new CustomEvent('userInactivity', { 
+                        detail: { message: 'You have been logged out due to inactivity.' }
+                    }));
                 }
             }, 5 * 60 * 1000); // 5 minutes
         };
