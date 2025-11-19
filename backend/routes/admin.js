@@ -20,6 +20,10 @@ const { protect, authorize } = require('../middleware/auth');
 // Order Management Routes (for admin & deliveryadmin)
 router.route('/orders')
     .get(protect, authorize('admin', 'deliveryadmin'), getAllOrders);
+
+router.route('/orders/export')
+    .get(protect, authorize('admin'), require('../controllers/admin').exportDailyOrders);
+
 router.route('/orders/:id')
     .put(protect, authorize('admin', 'deliveryadmin'), updateOrderStatus);
     

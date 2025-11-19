@@ -84,3 +84,71 @@ exports.updateOrderStatus = async (req, res) => {
         res.status(500).json({ msg: 'Server Error' });
     }
 };
+
+// @desc    Export daily orders report
+// @route   GET /api/admin/orders/export
+// @access  Private (Admin)
+exports.exportDailyOrders = async (req, res) => {
+    try {
+        const { date } = req.query;
+        const targetDate = date ? new Date(date) : new Date();
+        
+        const startOfDay = new Date(targetDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        
+        const endOfDay = new Date(targetDate);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        const orders = await Order.find({
+            createdAt: { $gte: startOfDay, $lte: endOfDay }
+        })
+        .populate('user', 'name email contactNumber')
+        .populate('restaurant', 'name')
+        .sort({ 'restaurant.name': 1, createdAt: -1 }); // Group by restaurant
+
+        // Generate CSV
+        const headers = ['Order ID', 'Restaurant', 'Customer Name', 'Contact', 'Items', 'Total Price', 'Status', 'Time'];
+        const csvRows = [headers.join(',')];
+
+        orders.forEach(order => {
+            // Format items string: "Burger x 2; Fries x 1"
+            const itemsString = order.items
+                .map(item => `${item.name} x ${item.quantity}`)
+                .join('; ');
+
+            // Escape fields that might contain commas
+            const escapeCsv = (field) => {
+                if (!field) return '';
+                const stringField = String(field);
+                if (stringField.includes(',') || stringField.includes('"') || stringField.includes('\n')) {
+                    return `"${stringField.replace(/"/g, '""')}"`;
+                }
+                return stringField;
+            };
+
+            const row = [
+                order._id,
+                order.restaurant?.name || 'Unknown Restaurant',
+                order.user?.name || 'Guest',
+                order.user?.contactNumber || 'N/A',
+                itemsString,
+                order.totalPrice.toFixed(2),
+                order.status,
+                new Date(order.createdAt).toLocaleTimeString()
+            ].map(escapeCsv).join(',');
+
+            csvRows.push(row);
+        });
+
+        const csvString = csvRows.join('\n');
+        const filename = `orders-${targetDate.toISOString().split('T')[0]}.csv`;
+
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+        res.status(200).send(csvString);
+
+    } catch (error) {
+        console.error('Export error:', error);
+        res.status(500).json({ msg: 'Server Error during export' });
+    }
+};
