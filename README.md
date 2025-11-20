@@ -13,7 +13,7 @@ FoodFreaky is a comprehensive food delivery platform that allows users to browse
 - **Styling**: Tailwind CSS for responsive design
 - **State Management**: React Context API for global state
 - **Build Tool**: Create React App
-- **Deployment**: Netlify (https://cheerful-cannoli-94af42.netlify.app)
+- **Deployment**: foodfreaky.in
 
 ### Backend (Node.js/Express)
 - **Framework**: Express.js 5.1.0
