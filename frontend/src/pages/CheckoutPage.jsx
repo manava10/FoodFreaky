@@ -96,21 +96,36 @@ const CheckoutPage = () => {
     }, [cartTotal, appliedCouponCode, handleApplyCoupon]);
     
     const subtotal = cartTotal;
+    const isFruitStall = cartItems.length > 0 && cartItems[0].restaurant?.type === 'fruit_stall';
+    
+    // Calculate dynamic Tax (Paid to restaurant)
+    let taxAmount = 0;
 
-    // Calculate dynamic service fee
-    let serviceFee;
-    if (subtotal < 500) {
-        serviceFee = subtotal * 0.10; // 10%
-    } else if (subtotal >= 500 && subtotal < 750) {
-        serviceFee = subtotal * 0.08; // 8%
-    } else if (subtotal >= 750 && subtotal < 1000) {
-        serviceFee = subtotal * 0.065; // 6.5%
-    } else { // 1000 and above
-        serviceFee = subtotal * 0.05; // 5%
+    if (!isFruitStall) {
+        if (subtotal < 500) {
+            taxAmount = subtotal * 0.09; // 9%
+        } else if (subtotal >= 500 && subtotal < 750) {
+            taxAmount = subtotal * 0.085; // 8.5%
+        } else if (subtotal >= 750 && subtotal < 1000) {
+            taxAmount = subtotal * 0.075; // 7.5%
+        } else { // 1000 and above
+            taxAmount = subtotal * 0.0625; // 6.25%
+        }
+    }
+    
+    // Calculate Delivery Charge based on Restaurant Type
+    let deliveryCharge = 50; // Default
+
+    
+    if (isFruitStall) {
+        if (subtotal < 500) {
+            deliveryCharge = 30;
+        } else {
+            deliveryCharge = 50;
+        }
     }
 
-    const deliveryCharge = 50;
-    const finalTotal = subtotal + serviceFee + deliveryCharge - discount;
+    const finalTotal = subtotal + taxAmount + deliveryCharge - discount;
 
     const handlePlaceOrder = async () => {
         if (!address || !contactNumber) {
@@ -126,7 +141,7 @@ const CheckoutPage = () => {
             })),
             shippingAddress: address,
             itemsPrice: subtotal,
-            taxPrice: serviceFee,
+            taxPrice: taxAmount,
             shippingPrice: deliveryCharge,
             totalPrice: finalTotal,
             couponUsed: discount > 0 ? appliedCouponCode : null,
@@ -259,10 +274,12 @@ const CheckoutPage = () => {
                                 <span>Delivery Charges</span>
                                 <span>₹{deliveryCharge.toFixed(2)}</span>
                             </div>
-                            <div className="price-row">
-                                <span>Service Fee</span>
-                                <span>₹{serviceFee.toFixed(2)}</span>
-                            </div>
+                            {taxAmount > 0 && (
+                                <div className="price-row">
+                                    <span>Tax (Paid to restaurant)</span>
+                                    <span>₹{taxAmount.toFixed(2)}</span>
+                                </div>
+                            )}
                             {discount > 0 && (
                                 <div className="price-row discount">
                                     <span>Discount</span>

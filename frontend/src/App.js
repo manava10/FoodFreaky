@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import RestaurantPage from './pages/RestaurantPage';
+import FruitPage from './pages/FruitPage';
 import RegisterPage from './pages/RegisterPage';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
@@ -35,6 +36,7 @@ function AppContent() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/restaurants" element={<RestaurantPage />} />
+        <Route path="/fruits" element={<FruitPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />

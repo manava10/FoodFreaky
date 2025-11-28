@@ -43,14 +43,14 @@ const CartProviderContent = ({ children }) => {
                     x.name === item.name ? { ...exist, quantity: exist.quantity + 1 } : x
                 );
             } else {
-                return [...prevItems, { ...item, quantity: 1, restaurant: { id: restaurant.id, name: restaurant.name } }];
+                return [...prevItems, { ...item, quantity: 1, restaurant: { id: restaurant.id, name: restaurant.name, type: restaurant.type } }];
             }
         });
     };
 
     const handleConfirmClearCart = () => {
         const { item, restaurant } = clearCartConfirmation;
-        setCartItems([{ ...item, quantity: 1, restaurant: { id: restaurant.id, name: restaurant.name } }]);
+        setCartItems([{ ...item, quantity: 1, restaurant: { id: restaurant.id, name: restaurant.name, type: restaurant.type } }]);
         setClearCartConfirmation({ isOpen: false, item: null, restaurant: null });
     };
 

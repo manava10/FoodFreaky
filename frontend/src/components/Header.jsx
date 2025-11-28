@@ -51,6 +51,12 @@ const Header = () => {
                         >
                             Restaurants
                         </button>
+                        <button
+                            onClick={() => navigate('/fruits')}
+                            className="header-btn-primary primary"
+                        >
+                            Fruits
+                        </button>
                         {isLoggedIn ? (
                             <>
                                 <button onClick={() => navigate('/dashboard')} className="header-btn-primary primary">Dashboard</button>
@@ -105,6 +111,7 @@ const Header = () => {
                 </div>
                 <div className="flex flex-col items-center space-y-8">
                     <button onClick={() => handleMobileLinkClick('/restaurants')} className="mobile-menu-link">Restaurants</button>
+                    <button onClick={() => handleMobileLinkClick('/fruits')} className="mobile-menu-link">Fruits</button>
                     {isLoggedIn ? (
                         <>
                             <button onClick={() => { handleMobileLinkClick('/dashboard'); toggleProfileModal(); }} className="mobile-menu-link">My Profile</button>

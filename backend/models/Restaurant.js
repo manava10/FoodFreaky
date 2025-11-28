@@ -53,6 +53,11 @@ const RestaurantSchema = new mongoose.Schema({
         type: Boolean,
         default: true,
     },
+    type: {
+        type: String,
+        enum: ['restaurant', 'fruit_stall'],
+        default: 'restaurant',
+    }
 }, {
     timestamps: true,
 });
@@ -62,5 +67,6 @@ RestaurantSchema.index({ name: 1 });
 RestaurantSchema.index({ cuisine: 1 });
 RestaurantSchema.index({ tags: 1 });
 RestaurantSchema.index({ averageRating: -1 });
+RestaurantSchema.index({ type: 1 });
 
 module.exports = mongoose.model('Restaurant', RestaurantSchema);

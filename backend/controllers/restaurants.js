@@ -5,7 +5,23 @@ const Restaurant = require('../models/Restaurant');
 // @access  Public
 exports.getRestaurants = async (req, res, next) => {
     try {
-        const restaurants = await Restaurant.find();
+        const { type } = req.query;
+        
+        let query = {};
+        
+        // If requesting fruit stalls, strictly filter for them
+        if (type === 'fruit_stall') {
+            query.type = 'fruit_stall';
+        } else {
+            // If requesting restaurants (or default), include both explicit 'restaurant' type
+            // AND documents that don't have a type field yet (backward compatibility for existing data)
+            query.$or = [
+                { type: 'restaurant' },
+                { type: { $exists: false } }
+            ];
+        }
+
+        const restaurants = await Restaurant.find(query);
 
         res.status(200).json({
             success: true,

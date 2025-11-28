@@ -268,7 +268,7 @@ function RestaurantPage() {
             return;
         }
         const existingItem = cartItems.find(x => x.name === item.name);
-        addToCart(item, { id: restaurant._id, name: restaurant.name });
+        addToCart(item, { id: restaurant._id, name: restaurant.name, type: restaurant.type });
         if (existingItem) {
             showSuccess(`${item.name} quantity updated!`);
         } else {
@@ -678,7 +678,7 @@ function RestaurantPage() {
                                                                 {getItemQuantity(item.name) === 0 ? (
                                                                     <button 
                                                                         onClick={() => handleAddToCart(item, selectedRestaurant)} 
-                                                                        className="add-to-cart-btn"
+                                                                        className="add-to-cart-btn disabled:opacity-50 disabled:cursor-not-allowed"
                                                                         disabled={!settings.isOrderingEnabled || isLoadingSettings || selectedRestaurant?.isAcceptingOrders === false}
                                                                     >
                                                                         {!settings.isOrderingEnabled 
@@ -691,13 +691,13 @@ function RestaurantPage() {
                                                                     <div className="quantity-control">
                                                                         <button 
                                                                             onClick={() => decreaseQuantity(item.name)} 
-                                                                            className="quantity-btn"
+                                                                            className="quantity-btn disabled:opacity-50 disabled:cursor-not-allowed"
                                                                             disabled={!settings.isOrderingEnabled || isLoadingSettings || (settings.isOrderingEnabled && selectedRestaurant?.isAcceptingOrders === false)}
                                                                         >-</button>
                                                                         <span className="quantity-display">{getItemQuantity(item.name)}</span>
                                                                         <button 
                                                                             onClick={() => increaseQuantity(item.name)} 
-                                                                            className="quantity-btn"
+                                                                            className="quantity-btn disabled:opacity-50 disabled:cursor-not-allowed"
                                                                             disabled={!settings.isOrderingEnabled || isLoadingSettings || (settings.isOrderingEnabled && selectedRestaurant?.isAcceptingOrders === false)}
                                                                         >+</button>
                                                                     </div>

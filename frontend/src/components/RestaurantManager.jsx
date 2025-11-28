@@ -15,6 +15,7 @@ const RestaurantManager = () => {
     const [cuisine, setCuisine] = useState('');
     const [deliveryTime, setDeliveryTime] = useState('');
     const [tags, setTags] = useState('');
+    const [type, setType] = useState('restaurant'); // Default to restaurant
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
@@ -57,12 +58,13 @@ const RestaurantManager = () => {
                 cuisine, 
                 deliveryTime, 
                 tags: tags.split(',').map(tag => tag.trim()),
+                type, // Add type to the payload
                 menu: [] // Default with an empty menu
             };
             const { data } = await axios.post(`${process.env.REACT_APP_API_URL}/api/admin/restaurants`, newRestaurant, config);
             setRestaurants([data.data, ...restaurants]);
             // Clear form
-            setName(''); setCuisine(''); setDeliveryTime(''); setTags('');
+            setName(''); setCuisine(''); setDeliveryTime(''); setTags(''); setType('restaurant');
         } catch (err) {
             setError(err.response?.data?.msg || 'Failed to create restaurant');
         }
@@ -116,8 +118,16 @@ const RestaurantManager = () => {
                     <input type="text" placeholder="Cuisine (e.g., Italian)" value={cuisine} onChange={e => setCuisine(e.target.value)} required />
                     <input type="text" placeholder="Delivery Time (e.g., 25-35 min)" value={deliveryTime} onChange={e => setDeliveryTime(e.target.value)} required />
                     <input type="text" placeholder="Tags (comma-separated)" value={tags} onChange={e => setTags(e.target.value)} />
+                    <select 
+                        value={type} 
+                        onChange={e => setType(e.target.value)}
+                        className="w-full p-3 border border-gray-300 rounded bg-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    >
+                        <option value="restaurant">Restaurant</option>
+                        <option value="fruit_stall">Fruit Stall</option>
+                    </select>
                 </div>
-                <button type="submit" className="create-coupon-btn">Add Restaurant</button>
+                <button type="submit" className="create-coupon-btn">Add Establishment</button>
                 {error && <p className="error-message">{error}</p>}
             </form>
 
@@ -127,6 +137,13 @@ const RestaurantManager = () => {
                         <div className="flex-1">
                             <div className="flex items-center gap-2">
                                 <strong className="coupon-code">{restaurant.name}</strong>
+                                <span className={`px-2 py-0.5 rounded text-xs font-bold ${
+                                    restaurant.type === 'fruit_stall' 
+                                        ? 'bg-green-100 text-green-800' 
+                                        : 'bg-blue-100 text-blue-800'
+                                }`}>
+                                    {restaurant.type === 'fruit_stall' ? 'Fruit Stall' : 'Restaurant'}
+                                </span>
                                 <span className={`px-2 py-1 rounded text-xs font-semibold ${
                                     restaurant.isAcceptingOrders !== false 
                                         ? 'bg-green-100 text-green-800' 

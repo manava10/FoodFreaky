@@ -27,15 +27,51 @@ exports.createOrder = async (req, res) => {
             return res.status(400).json({ msg: 'Restaurant ID is required' });
         }
 
+        // Fetch restaurant to check type and apply specific logic
+        const restaurantDoc = await Restaurant.findById(restaurant);
+        if (!restaurantDoc) {
+            return res.status(404).json({ msg: 'Restaurant not found' });
+        }
+
+        let finalShippingPrice = shippingPrice;
+        
+        // Custom Delivery Logic for Fruit Stalls
+        if (restaurantDoc.type === 'fruit_stall') {
+            // Logic: < 500 => 30 Rs, >= 500 => 50 Rs
+            if (itemsPrice < 500) {
+                finalShippingPrice = 30;
+            } else {
+                finalShippingPrice = 50;
+            }
+        } else {
+            // For regular restaurants, ensure we stick to the standard 50 (or whatever was passed if valid)
+            // If we want to enforce 50 for restaurants, we can do it here.
+            // Assuming standard delivery is 50 for now based on previous code context
+            finalShippingPrice = 50; 
+        }
+
+        // Recalculate total price to ensure consistency
+        // totalPrice = itemsPrice + taxPrice + finalShippingPrice - (couponDiscount if any)
+        // Since coupon logic is complex and calculated on frontend/coupon endpoint, 
+        // we might just need to adjust the difference in shipping.
+        // Ideally, we should recalculate everything, but for now let's adjust based on shipping difference.
+        
+        // Let's assume totalPrice passed includes the OLD shipping price.
+        // We need to subtract old shipping and add new shipping.
+        // BUT 'shippingPrice' from req.body is what frontend thought it was.
+        // So we can do: newTotal = totalPrice - req.body.shippingPrice + finalShippingPrice
+        
+        const adjustedTotalPrice = totalPrice - shippingPrice + finalShippingPrice;
+
         const order = new Order({
             user: req.user.id,
-            restaurant, // new field
+            restaurant, 
             items,
             shippingAddress,
             itemsPrice,
             taxPrice,
-            shippingPrice,
-            totalPrice,
+            shippingPrice: finalShippingPrice, // Use server-calculated shipping
+            totalPrice: adjustedTotalPrice,    // Use adjusted total
             couponUsed
         });
 
