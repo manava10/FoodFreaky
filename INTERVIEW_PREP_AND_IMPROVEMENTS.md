@@ -1,5 +1,7 @@
 # FoodFreaky: Interview Prep & Improvement Guide
 
+> **📝 For detailed resume guidance with ready-to-use bullet points, see [RESUME_BACKEND.md](RESUME_BACKEND.md)**
+
 ## 1. Project Overview (The "Elevator Pitch")
 
 "FoodFreaky is a full-stack food delivery application I built using the MERN stack (MongoDB, Express, React, Node.js). It solves the problem of ordering food from multiple campus restaurants by aggregating them into a single platform. It features secure JWT authentication, role-based access control (User, Admin, Delivery), a dynamic cart system that manages multi-restaurant conflicts, and an order tracking workflow."

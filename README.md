@@ -367,6 +367,16 @@ The application uses Tailwind CSS for styling with:
 4. Add tests if applicable
 5. Submit a pull request
 
+## 📝 Resume & Career Resources
+
+Looking to showcase this project on your resume? Check out:
+- **[RESUME_BACKEND.md](RESUME_BACKEND.md)** - Comprehensive guide for writing about this project on your resume, with focus on backend development
+  - Resume bullet points (3 different formats)
+  - Technical skills demonstrated
+  - Interview talking points & Q&A
+  - Problem-solving examples
+  - Quantifiable achievements
+
 ## 📄 License
 
 This project is private and proprietary.
