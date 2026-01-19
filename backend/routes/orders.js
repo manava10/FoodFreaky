@@ -8,14 +8,25 @@ const {
     rateOrder,
 } = require('../controllers/orders');
 const { protect } = require('../middleware/auth');
+const { orderLimiter } = require('../middleware/rateLimiter');
+const { validateOrderId } = require('../middleware/sanitizer');
 
 // All routes here are protected
 router.use(protect);
 
-router.route('/').post(createOrder);
+// POST /api/orders - Create order (with strict rate limiting)
+router.route('/').post(orderLimiter, createOrder);
+
+// GET /api/orders/myorders - Get user's orders
 router.route('/myorders').get(getMyOrders);
-router.route('/:id/cancel').put(cancelOrder);
-router.route('/:id/invoice').get(getOrderInvoice);
-router.route('/:id/rate').put(rateOrder);
+
+// PUT /api/orders/:id/cancel - Cancel order (with ID validation)
+router.route('/:id/cancel').put(validateOrderId, cancelOrder);
+
+// GET /api/orders/:id/invoice - Get order invoice (with ID validation)
+router.route('/:id/invoice').get(validateOrderId, getOrderInvoice);
+
+// PUT /api/orders/:id/rate - Rate order (with ID validation)
+router.route('/:id/rate').put(validateOrderId, rateOrder);
 
 module.exports = router;

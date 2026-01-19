@@ -63,10 +63,11 @@ const RestaurantSchema = new mongoose.Schema({
 });
 
 // Indexes for better query performance
-RestaurantSchema.index({ name: 1 });
+// Note: 'name' field already has an index from 'unique: true'
 RestaurantSchema.index({ cuisine: 1 });
 RestaurantSchema.index({ tags: 1 });
 RestaurantSchema.index({ averageRating: -1 });
 RestaurantSchema.index({ type: 1 });
+RestaurantSchema.index({ isAcceptingOrders: 1, type: 1 }); // Compound index for filtering open restaurants
 
 module.exports = mongoose.model('Restaurant', RestaurantSchema);

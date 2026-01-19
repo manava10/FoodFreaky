@@ -8,83 +8,226 @@ const PDFDocument = require('pdfkit');
 // @access  Private
 exports.createOrder = async (req, res) => {
     try {
-        const { 
-            items, 
-            shippingAddress, 
-            itemsPrice, 
-            taxPrice, 
-            shippingPrice, 
-            totalPrice,
+        const {
+            items,
+            shippingAddress,
+            itemsPrice: frontendItemsPrice,  // Keep for logging/comparison
+            taxPrice: frontendTaxPrice,       // Keep for logging/comparison
+            shippingPrice: frontendShippingPrice, // Keep for logging/comparison
+            totalPrice: frontendTotalPrice,   // Keep for logging/comparison
             couponUsed,
-            restaurant // new field
+            restaurant
         } = req.body;
 
+        // ==========================================
+        // VALIDATION: Basic input checks
+        // ==========================================
         if (!items || items.length === 0) {
             return res.status(400).json({ msg: 'No order items' });
         }
-        
+
         if (!restaurant) {
             return res.status(400).json({ msg: 'Restaurant ID is required' });
         }
 
-        // Fetch restaurant to check type and apply specific logic
+        if (!shippingAddress || shippingAddress.trim() === '') {
+            return res.status(400).json({ msg: 'Shipping address is required' });
+        }
+
+        // Validate item quantities
+        for (const item of items) {
+            if (!item.name || typeof item.name !== 'string') {
+                return res.status(400).json({ msg: 'Invalid item name' });
+            }
+            if (!Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > 100) {
+                return res.status(400).json({ msg: `Invalid quantity for item "${item.name}". Must be between 1 and 100.` });
+            }
+        }
+
+        // ==========================================
+        // SECURITY: Fetch restaurant and verify it exists
+        // ==========================================
         const restaurantDoc = await Restaurant.findById(restaurant);
         if (!restaurantDoc) {
             return res.status(404).json({ msg: 'Restaurant not found' });
         }
 
-        let finalShippingPrice = shippingPrice;
-        
-        // Custom Delivery Logic for Fruit Stalls
-        if (restaurantDoc.type === 'fruit_stall') {
-            // Logic: < 500 => 30 Rs, >= 500 => 50 Rs
-            if (itemsPrice < 500) {
-                finalShippingPrice = 30;
-            } else {
-                finalShippingPrice = 50;
-            }
-        } else {
-            // For regular restaurants, ensure we stick to the standard 50 (or whatever was passed if valid)
-            // If we want to enforce 50 for restaurants, we can do it here.
-            // Assuming standard delivery is 50 for now based on previous code context
-            finalShippingPrice = 50; 
+        // Check if restaurant is accepting orders
+        if (restaurantDoc.isAcceptingOrders === false) {
+            return res.status(400).json({ msg: 'This restaurant is not currently accepting orders' });
         }
 
-        // Recalculate total price to ensure consistency
-        // totalPrice = itemsPrice + taxPrice + finalShippingPrice - (couponDiscount if any)
-        // Since coupon logic is complex and calculated on frontend/coupon endpoint, 
-        // we might just need to adjust the difference in shipping.
-        // Ideally, we should recalculate everything, but for now let's adjust based on shipping difference.
-        
-        // Let's assume totalPrice passed includes the OLD shipping price.
-        // We need to subtract old shipping and add new shipping.
-        // BUT 'shippingPrice' from req.body is what frontend thought it was.
-        // So we can do: newTotal = totalPrice - req.body.shippingPrice + finalShippingPrice
-        
-        const adjustedTotalPrice = totalPrice - shippingPrice + finalShippingPrice;
+        // ==========================================
+        // SECURITY: Build price map from restaurant menu (server-side truth)
+        // ==========================================
+        const priceMap = {};
+        if (restaurantDoc.menu && Array.isArray(restaurantDoc.menu)) {
+            restaurantDoc.menu.forEach(category => {
+                if (category.items && Array.isArray(category.items)) {
+                    category.items.forEach(menuItem => {
+                        priceMap[menuItem.name.toLowerCase().trim()] = menuItem.price;
+                    });
+                }
+            });
+        }
 
+        // ==========================================
+        // SECURITY: Verify each item's price against database
+        // ==========================================
+        let calculatedItemsPrice = 0;
+        const verifiedItems = [];
+
+        for (const item of items) {
+            const itemNameKey = item.name.toLowerCase().trim();
+            const actualPrice = priceMap[itemNameKey];
+
+            if (actualPrice === undefined) {
+                return res.status(400).json({
+                    msg: `Item "${item.name}" not found in restaurant menu. Please refresh and try again.`
+                });
+            }
+
+            // Log if frontend price doesn't match (potential manipulation attempt)
+            if (item.price !== actualPrice) {
+                console.warn(`[SECURITY] Price mismatch for item "${item.name}": Frontend sent ₹${item.price}, DB has ₹${actualPrice}. User: ${req.user.id}`);
+            }
+
+            // Always use the DATABASE price, never the frontend price
+            verifiedItems.push({
+                name: item.name,
+                quantity: item.quantity,
+                price: actualPrice
+            });
+
+            calculatedItemsPrice += actualPrice * item.quantity;
+        }
+
+        // ==========================================
+        // SECURITY: Calculate tax on server (tiered rates)
+        // ==========================================
+        let calculatedTaxPrice = 0;
+        const isFruitStall = restaurantDoc.type === 'fruit_stall';
+
+        if (!isFruitStall) {
+            // Tiered tax rates for restaurants
+            if (calculatedItemsPrice < 500) {
+                calculatedTaxPrice = calculatedItemsPrice * 0.09; // 9%
+            } else if (calculatedItemsPrice >= 500 && calculatedItemsPrice < 750) {
+                calculatedTaxPrice = calculatedItemsPrice * 0.085; // 8.5%
+            } else if (calculatedItemsPrice >= 750 && calculatedItemsPrice < 1000) {
+                calculatedTaxPrice = calculatedItemsPrice * 0.075; // 7.5%
+            } else {
+                calculatedTaxPrice = calculatedItemsPrice * 0.0625; // 6.25%
+            }
+        }
+        // Round to 2 decimal places
+        calculatedTaxPrice = Math.round(calculatedTaxPrice * 100) / 100;
+
+        // ==========================================
+        // SECURITY: Calculate shipping on server
+        // ==========================================
+        let calculatedShippingPrice = 50; // Default for restaurants
+
+        if (isFruitStall) {
+            // Fruit stall delivery logic
+            if (calculatedItemsPrice < 500) {
+                calculatedShippingPrice = 30;
+            } else {
+                calculatedShippingPrice = 50;
+            }
+        }
+
+        // ==========================================
+        // SECURITY: Verify and calculate coupon discount on server
+        // ==========================================
+        let calculatedDiscount = 0;
+        let validatedCouponCode = null;
+
+        if (couponUsed && couponUsed.trim() !== '') {
+            const coupon = await Coupon.findOne({
+                code: couponUsed.toUpperCase().trim(),
+                isActive: true
+            });
+
+            if (!coupon) {
+                return res.status(400).json({ msg: 'Invalid or inactive coupon code' });
+            }
+
+            // Check expiration
+            if (coupon.expiresAt && new Date(coupon.expiresAt) < new Date()) {
+                return res.status(400).json({ msg: 'This coupon has expired' });
+            }
+
+            // Check usage limit
+            if (coupon.usageLimit !== null && coupon.timesUsed >= coupon.usageLimit) {
+                return res.status(400).json({ msg: 'This coupon has reached its usage limit' });
+            }
+
+            // Calculate discount based on coupon type
+            if (coupon.discountType === 'percentage') {
+                calculatedDiscount = calculatedItemsPrice * (coupon.value / 100);
+            } else {
+                calculatedDiscount = coupon.value;
+            }
+
+            // Cap discount at items price (can't go negative)
+            calculatedDiscount = Math.min(calculatedDiscount, calculatedItemsPrice);
+            calculatedDiscount = Math.round(calculatedDiscount * 100) / 100;
+
+            validatedCouponCode = coupon.code;
+        }
+
+        // ==========================================
+        // SECURITY: Calculate final total on server
+        // ==========================================
+        const calculatedTotalPrice = calculatedItemsPrice + calculatedTaxPrice + calculatedShippingPrice - calculatedDiscount;
+        const finalTotalPrice = Math.round(calculatedTotalPrice * 100) / 100;
+
+        // Log any significant discrepancies (potential manipulation attempts)
+        const priceDifference = Math.abs(finalTotalPrice - (frontendTotalPrice || 0));
+        if (priceDifference > 1) { // More than ₹1 difference
+            console.warn(`[SECURITY] Total price discrepancy detected. Frontend: ₹${frontendTotalPrice}, Server: ₹${finalTotalPrice}. User: ${req.user.id}`);
+        }
+
+        // ==========================================
+        // CREATE ORDER: Use only server-calculated values
+        // ==========================================
         const order = new Order({
             user: req.user.id,
-            restaurant, 
-            items,
-            shippingAddress,
-            itemsPrice,
-            taxPrice,
-            shippingPrice: finalShippingPrice, // Use server-calculated shipping
-            totalPrice: adjustedTotalPrice,    // Use adjusted total
-            couponUsed
+            restaurant,
+            items: verifiedItems,           // Server-verified items with DB prices
+            shippingAddress: shippingAddress.trim(),
+            itemsPrice: calculatedItemsPrice,    // Server-calculated
+            taxPrice: calculatedTaxPrice,        // Server-calculated
+            shippingPrice: calculatedShippingPrice, // Server-calculated
+            totalPrice: finalTotalPrice,         // Server-calculated
+            couponUsed: validatedCouponCode      // Server-validated coupon code
         });
 
         const createdOrder = await order.save();
 
-        // If a coupon was used, increment its timesUsed count
-        if (couponUsed) {
-            await Coupon.updateOne({ code: couponUsed.toUpperCase() }, { $inc: { timesUsed: 1 } });
+        // Increment coupon usage count after successful order
+        if (validatedCouponCode) {
+            await Coupon.updateOne(
+                { code: validatedCouponCode },
+                { $inc: { timesUsed: 1 } }
+            );
         }
 
-        res.status(201).json(createdOrder);
+        // Return success with server-calculated values
+        res.status(201).json({
+            ...createdOrder.toObject(),
+            _securityNote: 'All prices verified and calculated on server'
+        });
+
     } catch (error) {
-        console.error(error);
+        console.error('Order creation error:', error);
+
+        // Handle specific MongoDB errors
+        if (error.name === 'CastError' && error.kind === 'ObjectId') {
+            return res.status(400).json({ msg: 'Invalid restaurant ID format' });
+        }
+
         res.status(500).json({ msg: 'Server Error' });
     }
 };
@@ -137,6 +280,21 @@ exports.rateOrder = async (req, res) => {
     const { rating, review } = req.body;
 
     try {
+        // Validate rating input
+        if (rating === undefined || rating === null) {
+            return res.status(400).json({ msg: 'Rating is required' });
+        }
+
+        const numRating = Number(rating);
+        if (!Number.isInteger(numRating) || numRating < 1 || numRating > 5) {
+            return res.status(400).json({ msg: 'Rating must be an integer between 1 and 5' });
+        }
+
+        // Validate review if provided
+        if (review && (typeof review !== 'string' || review.length > 1000)) {
+            return res.status(400).json({ msg: 'Review must be a string with max 1000 characters' });
+        }
+
         const order = await Order.findById(req.params.id);
 
         if (!order) {
@@ -155,8 +313,8 @@ exports.rateOrder = async (req, res) => {
             return res.status(400).json({ msg: 'Order already rated' });
         }
 
-        order.rating = rating;
-        order.review = review;
+        order.rating = numRating;
+        order.review = review ? review.trim() : undefined;
 
         await order.save();
 
@@ -202,7 +360,7 @@ exports.getOrderInvoice = async (req, res) => {
 
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename="invoice-${order._id}.pdf"`);
-        
+
         res.send(pdfBuffer);
 
     } catch (error) {

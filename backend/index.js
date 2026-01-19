@@ -4,6 +4,8 @@ const helmet = require('helmet');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 const { errorHandler } = require('./middleware/errorHandler');
+const { generalLimiter } = require('./middleware/rateLimiter');
+const { sanitizeInput } = require('./middleware/sanitizer');
 
 // Load environment variables
 dotenv.config();
@@ -53,6 +55,10 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 app.use(express.json());
+
+// Security: Rate limiting and input sanitization
+app.use('/api', generalLimiter); // Apply rate limiting to all API routes
+app.use(sanitizeInput); // Sanitize all input
 
 // Mount routers
 app.use('/api/auth', auth);

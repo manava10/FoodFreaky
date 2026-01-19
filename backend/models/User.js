@@ -50,13 +50,13 @@ const UserSchema = new mongoose.Schema({
 });
 
 // Indexes for better query performance
-UserSchema.index({ email: 1 });
-UserSchema.index({ resetPasswordToken: 1 });
-UserSchema.index({ otp: 1, otpExpires: 1 });
-UserSchema.index({ role: 1 });
+// Note: 'email' field already has an index from 'unique: true'
+UserSchema.index({ resetPasswordToken: 1, resetPasswordExpire: 1 }); // For password reset lookup
+UserSchema.index({ email: 1, otp: 1, otpExpires: 1 }); // For OTP verification
+UserSchema.index({ role: 1 }); // For admin queries
 
 // Encrypt password using bcrypt
-UserSchema.pre('save', async function(next) {
+UserSchema.pre('save', async function (next) {
     if (!this.isModified('password')) {
         next();
     }
@@ -66,12 +66,12 @@ UserSchema.pre('save', async function(next) {
 });
 
 // Match user entered password to hashed password in database
-UserSchema.methods.matchPassword = async function(enteredPassword) {
+UserSchema.methods.matchPassword = async function (enteredPassword) {
     return await bcrypt.compare(enteredPassword, this.password);
 };
 
 // Method to generate and hash password reset token
-UserSchema.methods.getResetPasswordToken = function() {
+UserSchema.methods.getResetPasswordToken = function () {
     // Generate token
     const resetToken = crypto.randomBytes(20).toString('hex');
 

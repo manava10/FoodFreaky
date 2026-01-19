@@ -1,10 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const { validateCoupon } = require('../controllers/coupons');
+const { couponLimiter } = require('../middleware/rateLimiter');
 
 // @desc    Validate a coupon code
 // @route   POST /api/coupons/validate
-// @access  Public
-router.post('/validate', validateCoupon);
+// @access  Public (with rate limiting to prevent abuse)
+router.post('/validate', couponLimiter, validateCoupon);
 
 module.exports = router;
+

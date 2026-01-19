@@ -38,4 +38,10 @@ const CouponSchema = new mongoose.Schema({
     }
 });
 
+// Indexes for better query performance
+// Note: 'code' field already has an index from 'unique: true'
+CouponSchema.index({ isActive: 1, expiresAt: 1 }); // For finding valid coupons
+CouponSchema.index({ createdAt: -1 }); // For listing coupons in admin panel
+
 module.exports = mongoose.model('Coupon', CouponSchema);
+
