@@ -8,18 +8,26 @@ const {
     resetPassword
 } = require('../controllers/auth');
 const { protect } = require('../middleware/auth');
-const { authLimiter } = require('../middleware/rateLimiter');
+const {
+    authLimiter,
+    otpLimiter,
+    passwordResetLimiter
+} = require('../middleware/rateLimiter');
 const router = express.Router();
 
-// Public auth routes with rate limiting to prevent brute-force attacks
-router.post('/register', authLimiter, register);
+// Public auth routes with appropriate rate limiting
+// OTP-related routes (stricter per-email/phone limiting to prevent SMS/email bombing)
+router.post('/register', otpLimiter, register);
 router.post('/verify-otp', authLimiter, verifyOtp);
-router.post('/login', authLimiter, login);
-router.post('/forgotpassword', authLimiter, forgotPassword);
-router.put('/resetpassword/:resettoken', authLimiter, resetPassword);
 
-// Protected routes
+// Login (user-based + IP-based hybrid limiting)
+router.post('/login', authLimiter, login);
+
+// Password reset (stricter per-email limiting)
+router.post('/forgotpassword', passwordResetLimiter, forgotPassword);
+router.put('/resetpassword/:resettoken', passwordResetLimiter, resetPassword);
+
+// Protected routes (no rate limiting needed - already authenticated)
 router.get('/me', protect, getMe);
 
 module.exports = router;
-
