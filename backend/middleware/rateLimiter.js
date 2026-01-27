@@ -8,6 +8,7 @@
  * 1. IP-based limits are intentionally HIGH (just DDoS protection)
  * 2. User-based limits (by email/phone) provide the REAL security
  * 3. Successful requests don't count against limits
+ * 4. Rate Limiter got high
  */
 
 const rateLimit = require('express-rate-limit');
