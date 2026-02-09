@@ -10,6 +10,23 @@ const { sanitizeInput } = require('./middleware/sanitizer');
 // Load environment variables
 dotenv.config();
 
+// Validate required environment variables
+const requiredEnvVars = [
+    'MONGO_URI',
+    'JWT_SECRET',
+    'EMAIL_USERNAME',
+    'EMAIL_PASSWORD'
+];
+
+const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+
+if (missingVars.length > 0) {
+    console.error('❌ Missing required environment variables:');
+    missingVars.forEach(varName => console.error(`  - ${varName}`));
+    console.error('\nPlease check your .env file and ensure all required variables are set.');
+    process.exit(1);
+}
+
 // Connect to database
 connectDB();
 

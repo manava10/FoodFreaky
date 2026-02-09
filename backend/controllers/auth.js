@@ -38,10 +38,12 @@ exports.register = async (req, res) => {
         if (user && !user.isVerified) {
             // User exists but is not verified, update their info and resend OTP
             user.name = name;
-            user.password = password; // You must re-hash the password
+            user.password = password; // Will be hashed by pre-save hook
             user.contactNumber = contactNumber;
             user.otp = otp;
             user.otpExpires = otpExpires;
+            // Mark password as modified to ensure pre-save hook runs
+            user.markModified('password');
             await user.save();
         } else {
             // Create new unverified user
