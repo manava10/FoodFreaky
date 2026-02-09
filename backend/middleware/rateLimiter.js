@@ -3,19 +3,42 @@
  * Prevents abuse by limiting the number of requests
  * 
  * DESIGNED FOR SHARED NETWORKS (1000+ users on same IP like hostels/universities)
+ * CLOUDFLARE COMPATIBLE - Reads real client IP from CF-Connecting-IP header
  * 
  * Strategy:
  * 1. IP-based limits are intentionally HIGH (just DDoS protection)
  * 2. User-based limits (by email/phone) provide the REAL security
  * 3. Successful requests don't count against limits
- * 4. Rate Limiter got high
+ * 4. Works behind Cloudflare by reading real client IP from headers
  */
 
 const rateLimit = require('express-rate-limit');
 
+/**
+ * Get real client IP address
+ * Handles Cloudflare (CF-Connecting-IP) and standard proxies (X-Forwarded-For)
+ * Falls back to req.ip (which Express populates if trust proxy is set)
+ */
+const getClientIp = (req) => {
+    // Cloudflare sends the real client IP in CF-Connecting-IP header
+    if (req.headers['cf-connecting-ip']) {
+        return req.headers['cf-connecting-ip'];
+    }
+    // Standard proxy header (X-Forwarded-For)
+    // Express will parse this if trust proxy is set, but we can also read it directly
+    if (req.headers['x-forwarded-for']) {
+        // X-Forwarded-For can contain multiple IPs, take the first one
+        const forwarded = req.headers['x-forwarded-for'].split(',')[0].trim();
+        return forwarded;
+    }
+    // Fallback to req.ip (Express will populate this correctly if trust proxy is set)
+    return req.ip || req.connection?.remoteAddress || 'unknown';
+};
+
 // =============================================================================
 // GENERAL API LIMITER
 // Very high limit - just protects against DDoS, not abuse
+// Cloudflare compatible - uses real client IP from headers
 // =============================================================================
 const generalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
@@ -28,6 +51,11 @@ const generalLimiter = rateLimit({
     legacyHeaders: false,
     // Skip successful requests - only count failures/suspicious activity
     skipSuccessfulRequests: true,
+    // Use custom key generator to handle Cloudflare IP headers
+    keyGenerator: (req) => {
+        const clientIp = getClientIp(req);
+        return `general_${clientIp}`;
+    },
 });
 
 // =============================================================================
@@ -49,7 +77,9 @@ const orderLimiter = rateLimit({
             return `order_user_${req.user.id}`;
         }
         // Fallback to IP for non-authenticated requests (shouldn't happen for orders)
-        return `order_ip_${req.ip}`;
+        // Use real client IP (handles Cloudflare)
+        const clientIp = getClientIp(req);
+        return `order_ip_${clientIp}`;
     },
 });
 
@@ -59,6 +89,7 @@ const orderLimiter = rateLimit({
 
 // IP-based auth limiter - HIGH limit for shared networks
 // This is just a safety net against massive DDoS attacks
+// Cloudflare compatible - uses real client IP from headers
 const authIpLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 1000, // 1000 auth attempts per IP per 15min (1 per user average)
@@ -69,6 +100,11 @@ const authIpLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
     skipSuccessfulRequests: true,
+    // Use custom key generator to handle Cloudflare IP headers
+    keyGenerator: (req) => {
+        const clientIp = getClientIp(req);
+        return `auth_ip_${clientIp}`;
+    },
 });
 
 // User-based auth limiter - STRICT limit per email/phone
@@ -101,6 +137,7 @@ const authLimiter = [authIpLimiter, authUserLimiter];
 
 // =============================================================================
 // COUPON LIMITER - Per User
+// Cloudflare compatible - uses real client IP from headers
 // =============================================================================
 const couponLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
@@ -111,6 +148,11 @@ const couponLimiter = rateLimit({
     },
     standardHeaders: true,
     legacyHeaders: false,
+    // Use custom key generator to handle Cloudflare IP headers
+    keyGenerator: (req) => {
+        const clientIp = getClientIp(req);
+        return `coupon_${clientIp}`;
+    },
 });
 
 // =============================================================================

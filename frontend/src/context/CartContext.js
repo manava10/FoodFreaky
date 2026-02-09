@@ -9,7 +9,23 @@ const CartProviderContent = ({ children }) => {
     const [cartItems, setCartItems] = useState(() => {
         try {
             const localData = localStorage.getItem('cartItems');
-            return localData ? JSON.parse(localData) : [];
+            if (!localData) return [];
+            
+            const parsed = JSON.parse(localData);
+            // Clean up old cart items that don't have restaurant property
+            // This prevents errors when accessing cartItems[0].restaurant
+            if (Array.isArray(parsed)) {
+                // Only filter out items that are completely missing restaurant info
+                // Keep items that have restaurant object, even if id might be missing (will be handled elsewhere)
+                return parsed.filter(item => {
+                    if (!item) return false;
+                    // If item has restaurant property, keep it (even if restaurant.id is missing, we'll handle that)
+                    if (item.restaurant) return true;
+                    // If item doesn't have restaurant at all, remove it
+                    return false;
+                });
+            }
+            return [];
         } catch (error) {
             console.error("Could not parse cart data from localStorage", error);
             return [];
@@ -28,7 +44,14 @@ const CartProviderContent = ({ children }) => {
     }, [cartItems]);
 
     const addToCart = (item, restaurant) => {
-        const isNewRestaurant = cartItems.length > 0 && cartItems[0].restaurant.id !== restaurant.id;
+        // Safely check if we're switching restaurants
+        const currentRestaurant = cartItems.length > 0 && cartItems[0]?.restaurant ? cartItems[0].restaurant : null;
+        const isNewRestaurant =
+            currentRestaurant &&
+            currentRestaurant.id &&
+            restaurant &&
+            restaurant.id &&
+            currentRestaurant.id !== restaurant.id;
 
         if (isNewRestaurant) {
             setClearCartConfirmation({ isOpen: true, item, restaurant });
@@ -119,7 +142,7 @@ const CartProviderContent = ({ children }) => {
                     <div className="modal-content confirmation-modal">
                         <h3>Start a New Order?</h3>
                         <p>
-                            Your cart contains items from <strong>{cartItems[0].restaurant.name}</strong>.
+                            Your cart contains items from <strong>{cartItems[0]?.restaurant?.name || 'another restaurant'}</strong>.
                             You can only order from one restaurant at a time.
                         </p>
                         <p>

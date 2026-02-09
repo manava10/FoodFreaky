@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getAllOrders, updateOrderStatus } = require('../controllers/admin');
+const { getAllOrders, updateOrderStatus, creditAllUsers, resetAllCredits } = require('../controllers/admin');
 const { getCoupons, createCoupon, deleteCoupon } = require('../controllers/coupons');
 const { 
     getAllRestaurants,
@@ -14,6 +14,7 @@ const {
 } = require('../controllers/restaurantsAdmin');
 const { updateSettings } = require('../controllers/settings');
 const { protect, authorize } = require('../middleware/auth');
+const { validate, schemas } = require('../middleware/validate');
 
 // Note: All routes in this file are automatically prefixed with /api/admin
 
@@ -25,23 +26,29 @@ router.route('/orders/export')
     .get(protect, authorize('admin'), require('../controllers/admin').exportDailyOrders);
 
 router.route('/orders/:id')
-    .put(protect, authorize('admin', 'deliveryadmin'), updateOrderStatus);
+    .put(protect, authorize('admin', 'deliveryadmin'), validate(schemas.updateOrderStatus), updateOrderStatus);
     
 // Settings Management (for admin ONLY)
 router.route('/settings')
-    .put(protect, authorize('admin'), updateSettings);
+    .put(protect, authorize('admin'), validate(schemas.updateSettings), updateSettings);
+
+// Credit Management (for admin ONLY)
+router.route('/credit-all-users')
+    .post(protect, authorize('admin'), creditAllUsers);
+router.route('/reset-all-credits')
+    .post(protect, authorize('admin'), resetAllCredits);
 
 // Coupon Management Routes (for admin ONLY)
 router.route('/coupons')
     .get(protect, authorize('admin'), getCoupons)
-    .post(protect, authorize('admin'), createCoupon);
+    .post(protect, authorize('admin'), validate(schemas.createCoupon), createCoupon);
 router.route('/coupons/:id')
     .delete(protect, authorize('admin'), deleteCoupon);
     
 // Restaurant Management Routes (for admin ONLY)
 router.route('/restaurants')
     .get(protect, authorize('admin'), getAllRestaurants)
-    .post(protect, authorize('admin'), createRestaurant);
+    .post(protect, authorize('admin'), validate(schemas.createRestaurant), createRestaurant);
 router.route('/restaurants/:id')
     .get(protect, authorize('admin'), getRestaurantById)
     .put(protect, authorize('admin'), updateRestaurant)

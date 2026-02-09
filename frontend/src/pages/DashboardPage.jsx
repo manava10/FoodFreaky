@@ -5,6 +5,7 @@ import Modal from '../components/Modal';
 import SuccessModal from '../components/SuccessModal';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { useCart } from '../context/CartContext';
 import Header from '../components/Header';
 import Rating from '../components/Rating'; // Assuming you have a Rating component
 import { OrderListSkeleton } from '../components/OrderCardSkeleton';
@@ -16,6 +17,7 @@ import foodBackground from '../assets/images/food-background.jpg';
 const DashboardPage = () => {
     const { user, authToken } = useAuth();
     const { showError, showWarning, showSuccess } = useToast();
+    const { addToCart, clearCart, cartItems } = useCart();
     const navigate = useNavigate();
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -25,15 +27,33 @@ const DashboardPage = () => {
     const [rating, setRating] = useState(0);
     const [review, setReview] = useState('');
     const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [statusFilter, setStatusFilter] = useState('');
+    const [dateFilter, setDateFilter] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
 
     useEffect(() => {
         const fetchOrders = async () => {
             try {
+                setLoading(true);
                 const config = {
                     headers: { Authorization: `Bearer ${authToken}` },
                 };
-                const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/api/orders/myorders`, config);
-                setOrders(data.data);
+                // Build query params with pagination and filters
+                const params = new URLSearchParams();
+                if (statusFilter) params.append('status', statusFilter);
+                if (dateFilter) {
+                    const [start, end] = dateFilter.split(' to ');
+                    if (start) params.append('startDate', start);
+                    if (end) params.append('endDate', end);
+                }
+                params.append('page', currentPage);
+                params.append('limit', 20); // Fetch 20 orders per page
+                
+                const queryString = params.toString();
+                const url = `${process.env.REACT_APP_API_URL}/api/orders/myorders${queryString ? '?' + queryString : ''}`;
+                const { data } = await axios.get(url, config);
+                setOrders(data.data || []);
             } catch (error) {
                 console.error('Failed to fetch orders:', error);
             } finally {
@@ -44,7 +64,7 @@ const DashboardPage = () => {
         if (authToken) {
             fetchOrders();
         }
-    }, [authToken]);
+    }, [authToken, statusFilter, dateFilter, currentPage]);
     
     const viewOrderDetails = (order) => setSelectedOrder(order);
     const closeOrderDetails = () => setSelectedOrder(null);
@@ -151,18 +171,43 @@ const DashboardPage = () => {
         switch (status.toLowerCase()) {
             case 'delivered':
                 return 'status-delivered';
-            case 'pending':
-                return 'status-pending';
+            case 'waiting for acceptance':
+                return 'status-waiting';
+            case 'accepted':
+                return 'status-accepted';
+            case 'preparing food':
+                return 'status-preparing';
+            case 'out for delivery':
+                return 'status-delivery';
             case 'cancelled':
                 return 'status-cancelled';
             default:
-                return 'bg-gray-400';
+                return 'status-default';
+        }
+    };
+
+    const getStatusIcon = (status) => {
+        switch (status.toLowerCase()) {
+            case 'delivered':
+                return '✓';
+            case 'waiting for acceptance':
+                return '⏳';
+            case 'accepted':
+                return '✓';
+            case 'preparing food':
+                return '👨‍🍳';
+            case 'out for delivery':
+                return '🚚';
+            case 'cancelled':
+                return '✕';
+            default:
+                return '•';
         }
     };
 
     return (
-        <div className="min-h-screen bg-gray-900" style={{ backgroundImage: `url(${foodBackground})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed' }}>
-            <div className="fixed inset-0 bg-black bg-opacity-70 z-0"></div>
+        <div className="min-h-screen bg-gray-900 dark:bg-gray-950" style={{ backgroundImage: `url(${foodBackground})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed' }}>
+            <div className="fixed inset-0 bg-black bg-opacity-70 dark:bg-opacity-80 z-0"></div>
             <Header />
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
@@ -207,32 +252,119 @@ const DashboardPage = () => {
 
                 {/* Recent Orders */}
                 <div className="recent-orders-section">
-                    <h2 className="text-xl md:text-2xl font-bold text-white mb-4">Recent Orders</h2>
-                    {orders.length === 0 ? (
-                        <EmptyOrders 
-                            onBrowseRestaurants={() => navigate('/restaurants')}
-                            className="empty-state-transparent"
-                        />
-                    ) : (
-                    <div className="flex flex-col gap-6">
-                        {orders.map(order => (
-                            <div key={order._id} className="order-card p-4 rounded-lg shadow-md">
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <h4 className="font-semibold text-gray-900" onClick={() => viewOrderDetails(order)}>Order #{order._id.substring(0, 8)}</h4>
-                                        <p className="font-bold text-orange-600 text-sm">{order.restaurant ? order.restaurant.name : 'Restaurant'}</p>
-                                        <p className="text-gray-600 text-sm" onClick={() => viewOrderDetails(order)}>{order.items.map(i => i.name).slice(0, 2).join(', ')}</p>
-                                        <p className="text-gray-500 text-sm">{new Date(order.createdAt).toLocaleString()}</p>
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                        <h2 className="text-xl md:text-2xl font-bold text-white">Recent Orders</h2>
+                        
+                        {/* Search and Filters */}
+                        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                            <input
+                                type="text"
+                                placeholder="Search orders..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="px-4 py-2 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 min-h-[44px] text-base"
+                            />
+                            <select
+                                value={statusFilter}
+                                onChange={(e) => {
+                                    setStatusFilter(e.target.value);
+                                    setCurrentPage(1);
+                                }}
+                                className="px-4 py-2 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 min-h-[44px] text-base"
+                            >
+                                <option value="">All Status</option>
+                                <option value="Waiting for Acceptance">Waiting</option>
+                                <option value="Accepted">Accepted</option>
+                                <option value="Preparing Food">Preparing</option>
+                                <option value="Out for Delivery">Out for Delivery</option>
+                                <option value="Delivered">Delivered</option>
+                                <option value="Cancelled">Cancelled</option>
+                            </select>
+                            {(statusFilter || dateFilter || searchQuery) && (
+                                <button
+                                    onClick={() => {
+                                        setStatusFilter('');
+                                        setDateFilter('');
+                                        setSearchQuery('');
+                                        setCurrentPage(1);
+                                    }}
+                                    className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg min-h-[44px] text-base"
+                                >
+                                    Clear
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                    
+                    {(() => {
+                        let filteredOrders = orders;
+                        
+                        // Apply search filter
+                        if (searchQuery) {
+                            const query = searchQuery.toLowerCase();
+                            filteredOrders = filteredOrders.filter(order => 
+                                order.restaurant?.name?.toLowerCase().includes(query) ||
+                                (order.items || []).some(item => item.name.toLowerCase().includes(query)) ||
+                                order._id.toLowerCase().includes(query)
+                            );
+                        }
+                        
+                        // Apply status filter
+                        if (statusFilter) {
+                            filteredOrders = filteredOrders.filter(order => order.status === statusFilter);
+                        }
+                        
+                        return filteredOrders.length === 0 ? (
+                            <EmptyOrders 
+                                onBrowseRestaurants={() => navigate('/restaurants')}
+                                className="empty-state-transparent"
+                            />
+                        ) : (
+                            <div className="flex flex-col gap-4">
+                                {filteredOrders.map(order => (
+                            <div key={order._id} className="order-card-modern bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5 hover:shadow-md transition-all duration-200">
+                                <div className="flex flex-col sm:flex-row justify-between gap-4">
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <h4 className="font-bold text-gray-900 dark:text-white text-lg cursor-pointer hover:text-orange-600 dark:hover:text-orange-400 transition-colors" onClick={() => viewOrderDetails(order)}>
+                                                Order #{order._id.substring(0, 8)}
+                                            </h4>
+                                            <span className={`status-badge-modern ${getStatusClass(order.status)}`}>
+                                                <span className="status-icon">{getStatusIcon(order.status)}</span>
+                                                <span className="status-text">{order.status}</span>
+                                            </span>
+                                        </div>
+                                        <p className="font-semibold text-orange-600 dark:text-orange-400 text-base mb-1">
+                                            {order.restaurant ? order.restaurant.name : 'Restaurant'}
+                                        </p>
+                                        <p className="text-gray-600 dark:text-gray-300 text-sm mb-2 cursor-pointer hover:text-gray-900 dark:hover:text-gray-100 transition-colors" onClick={() => viewOrderDetails(order)}>
+                                            {order.items && order.items.length > 0 ? (
+                                                <>
+                                                    {order.items.slice(0, 2).map(i => i.name).join(', ')}
+                                                    {order.items.length > 2 && ` +${order.items.length - 2} more`}
+                                                </>
+                                            ) : 'No items'}
+                                        </p>
+                                        <p className="text-gray-500 dark:text-gray-400 text-xs">
+                                            {new Date(order.createdAt).toLocaleString('en-IN', {
+                                                day: 'numeric',
+                                                month: 'short',
+                                                year: 'numeric',
+                                                hour: '2-digit',
+                                                minute: '2-digit'
+                                            })}
+                                        </p>
                                     </div>
-                                    <div className="text-right flex-shrink-0 ml-4">
-                                        <p className="text-lg font-semibold text-gray-900">₹{order.totalPrice.toFixed(2)}</p>
-                                        <span className={`status-badge ${getStatusClass(order.status)}`}>{order.status}</span>
+                                    <div className="flex flex-col items-end sm:items-end justify-between sm:justify-start gap-2">
+                                        <p className="text-xl font-bold text-gray-900 dark:text-white">
+                                            ₹{order.totalPrice.toFixed(2)}
+                                        </p>
                                     </div>
                                 </div>
-                                <div className="order-actions mt-4 pt-4 border-t border-gray-200 flex justify-end">
+                                <div className="order-actions-modern mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                                             {order.status === 'Waiting for Acceptance' && (
                                                     <button 
-                                                        className="cancel-order-btn"
+                                                        className="bg-red-50 hover:bg-red-100 text-red-700 border border-red-300 px-4 py-2 rounded-lg font-semibold text-sm min-h-[44px] transition-colors dark:bg-red-900/20 dark:hover:bg-red-900/30 dark:text-red-400 dark:border-red-800"
                                                         onClick={() => handleCancelOrder(order._id)}
                                                     >
                                                         Cancel Order
@@ -240,28 +372,116 @@ const DashboardPage = () => {
                                             )}
                                             {order.status === 'Delivered' && !order.rating && (
                                                 <button 
-                                                    className="rate-order-btn"
+                                                    className="bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-300 px-4 py-2 rounded-lg font-semibold text-sm min-h-[44px] transition-colors dark:bg-blue-900/20 dark:hover:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800 flex items-center gap-2"
                                                     onClick={() => openRatingModal(order)}
                                                 >
-                                                    Rate Order
+                                                    <span>⭐</span>
+                                                    <span>Rate Order</span>
                                                 </button>
                                             )}
                                             {order.status === 'Delivered' && order.rating && (
-                                                <Rating value={order.rating} />
+                                                <div className="flex items-center gap-2">
+                                                    <Rating value={order.rating} />
+                                                    <span className="text-sm text-gray-600 dark:text-gray-400">Rated</span>
+                                                </div>
+                                            )}
+                                            {order.status === 'Delivered' && (
+                                                <button 
+                                                    className="order-again-btn"
+                                                    onClick={async () => {
+                                                        try {
+                                                            const config = {
+                                                                headers: { Authorization: `Bearer ${authToken}` },
+                                                            };
+                                                            const { data } = await axios.get(
+                                                                `${process.env.REACT_APP_API_URL}/api/orders/${order._id}/reorder`,
+                                                                config
+                                                            );
+                                                            
+                                                            if (data.success && data.data) {
+                                                                const restaurant = data.data.restaurant;
+                                                                
+                                                                // Validate restaurant data
+                                                                if (!restaurant || !restaurant.id || !restaurant.name) {
+                                                                    showError('Invalid restaurant data. Cannot reorder.');
+                                                                    return;
+                                                                }
+                                                                
+                                                                // Validate items data
+                                                                if (!data.data.items || !Array.isArray(data.data.items) || data.data.items.length === 0) {
+                                                                    showError('No items found in this order.');
+                                                                    return;
+                                                                }
+                                                                
+                                                                // Helper function to add items to cart
+                                                                const addReorderItemsToCart = (items, rest) => {
+                                                                    items.forEach(item => {
+                                                                        if (item.name && item.price && item.quantity) {
+                                                                            for (let i = 0; i < item.quantity; i++) {
+                                                                                addToCart(
+                                                                                    { name: item.name, price: item.price },
+                                                                                    { 
+                                                                                        id: rest.id, 
+                                                                                        name: rest.name,
+                                                                                        type: rest.type || 'restaurant'
+                                                                                    }
+                                                                                );
+                                                                            }
+                                                                        }
+                                                                    });
+                                                                    showSuccess('Items added to cart! Redirecting...');
+                                                                    setTimeout(() => navigate('/restaurants'), 1000);
+                                                                };
+                                                                
+                                                                // Check if cart has items from a different restaurant
+                                                                const currentCartRestaurant = cartItems.length > 0 && cartItems[0]?.restaurant?.id ? cartItems[0].restaurant.id : null;
+                                                                const isDifferentRestaurant = currentCartRestaurant && currentCartRestaurant !== restaurant.id;
+                                                                
+                                                                if (isDifferentRestaurant) {
+                                                                    // Show confirmation before clearing cart
+                                                                    if (window.confirm(`Your cart has items from a different restaurant. Do you want to clear your cart and add items from ${restaurant.name}?`)) {
+                                                                        clearCart();
+                                                                        // Wait for cart to clear, then add new items
+                                                                        setTimeout(() => {
+                                                                            addReorderItemsToCart(data.data.items, restaurant);
+                                                                        }, 150);
+                                                                    }
+                                                                } else {
+                                                                    // Same restaurant or empty cart - just clear and add
+                                                                    clearCart();
+                                                                    setTimeout(() => {
+                                                                        addReorderItemsToCart(data.data.items, restaurant);
+                                                                    }, 150);
+                                                                }
+                                                            }
+                                                        } catch (error) {
+                                                            showError(error.response?.data?.msg || 'Failed to reorder');
+                                                        }
+                                                    }}
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                                    </svg>
+                                                    <span>Order Again</span>
+                                                </button>
                                             )}
                                             {order.status === 'Delivered' && (
                                                     <button 
-                                                        className="download-invoice-btn"
+                                                        className="download-bill-btn"
                                                         onClick={() => handleDownloadInvoice(order._id)}
                                                     >
-                                                        Download Bill
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                                        </svg>
+                                                        <span>Download Bill</span>
                                                     </button>
                                             )}
                                 </div>
                             </div>
-                        ))}
-                    </div>
-                    )}
+                                ))}
+                            </div>
+                        );
+                    })()}
                 </div>
             </>
             )}
@@ -273,7 +493,7 @@ const DashboardPage = () => {
                         <p className="text-lg font-semibold mb-2">
                             From: <span className="text-orange-600">{selectedOrder.restaurant ? selectedOrder.restaurant.name : 'Restaurant'}</span>
                         </p>
-                        {selectedOrder.items.map(item => (
+                        {(selectedOrder.items || []).map(item => (
                             <div key={item.name} className="order-item">
                                 <span>{item.name} (x{item.quantity})</span>
                                 <span>₹{(item.price * item.quantity).toFixed(2)}</span>

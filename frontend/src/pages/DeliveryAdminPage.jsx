@@ -91,7 +91,7 @@ const DeliveryAdminPage = () => {
                                         <div className="order-items-summary">
                                             <strong>Items:</strong>
                                             <ul>
-                                                {order.items.map(item => (
+                                                {(order.items || []).map(item => (
                                                     <li key={item.name}>{item.name} (x{item.quantity})</li>
                                                 ))}
                                             </ul>

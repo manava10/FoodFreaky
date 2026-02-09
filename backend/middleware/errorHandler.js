@@ -13,18 +13,22 @@ class ErrorResponse extends Error {
  * Global error handler middleware
  * Handles all errors and sends appropriate responses
  */
+const logger = require('../utils/logger');
+
 const errorHandler = (err, req, res, next) => {
   let error = { ...err };
   error.message = err.message;
 
-  // Log to console for development
-  if (process.env.NODE_ENV === 'development') {
-    console.error('Error:', {
-      message: err.message,
-      stack: err.stack,
-      statusCode: err.statusCode
-    });
-  }
+  // Log error using Winston
+  logger.error('Error occurred', {
+    message: err.message,
+    stack: err.stack,
+    statusCode: err.statusCode,
+    path: req.path,
+    method: req.method,
+    ip: req.ip,
+    userId: req.user?.id
+  });
 
   // Mongoose bad ObjectId
   if (err.name === 'CastError') {

@@ -13,6 +13,9 @@ const SuperAdminPage = () => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [reportDate, setReportDate] = useState(new Date().toISOString().split('T')[0]); // Default to today
+    const [creditingUsers, setCreditingUsers] = useState(false);
+    const [creditAmount, setCreditAmount] = useState(25); // Default credit amount
+    const [resettingCredits, setResettingCredits] = useState(false);
     const { authToken } = useAuth();
 
     useEffect(() => {
@@ -25,7 +28,9 @@ const SuperAdminPage = () => {
                 const config = {
                     headers: { Authorization: `Bearer ${authToken}` },
                 };
-                const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/api/admin/orders`, config);
+                // Fetch all orders by setting a very high limit (10000 should be enough for most cases)
+                // For super admin, we want to see all orders, not just the first page
+                const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/api/admin/orders?limit=10000`, config);
                 // Filter out any orders that might have a null user to prevent crashes
                 const validOrders = data.data.filter(order => order.user);
                 setOrders(validOrders);
@@ -65,6 +70,78 @@ const SuperAdminPage = () => {
         } catch (error) {
             console.error('Failed to download report:', error);
             alert('Failed to download report. Please try again.');
+        }
+    };
+
+    const handleCreditAllUsers = async () => {
+        // Validate credit amount
+        const amount = parseFloat(creditAmount);
+        if (isNaN(amount) || amount <= 0) {
+            alert('Please enter a valid credit amount greater than 0');
+            return;
+        }
+
+        const confirmMessage = `Are you sure you want to ADD ₹${amount} FoodFreaky credits to ALL users?\n\nThis will ADD to their existing balance (₹${amount} + previous balance).\n\nThis action cannot be undone.`;
+        
+        if (!window.confirm(confirmMessage)) {
+            return;
+        }
+
+        setCreditingUsers(true);
+        try {
+            const config = {
+                headers: { Authorization: `Bearer ${authToken}` },
+            };
+            // Add credits to existing balance (X + previous)
+            const { data } = await axios.post(
+                `${process.env.REACT_APP_API_URL}/api/admin/credit-all-users`,
+                { amount: amount }, // Add this amount to existing balance
+                config
+            );
+
+            if (data.success) {
+                alert(`✅ ${data.message}\n💰 Total credits added: ₹${data.totalCreditsDistributed}\n👥 Users credited: ${data.usersCredited}`);
+            }
+        } catch (error) {
+            console.error('Failed to credit users:', error);
+            alert(error.response?.data?.msg || 'Failed to credit users. Please try again.');
+        } finally {
+            setCreditingUsers(false);
+        }
+    };
+
+    const handleResetAllCredits = async () => {
+        const confirmMessage = `⚠️ WARNING: Are you absolutely sure you want to RESET ALL USERS' CREDITS TO ₹0?\n\nThis will set EVERY user's FoodFreaky credit balance to ₹0, regardless of their current balance.\n\nThis action CANNOT be undone!`;
+        
+        if (!window.confirm(confirmMessage)) {
+            return;
+        }
+
+        // Double confirmation
+        const doubleConfirm = window.confirm('This is your final confirmation. Click OK to proceed with resetting all credits to ₹0.');
+        if (!doubleConfirm) {
+            return;
+        }
+
+        setResettingCredits(true);
+        try {
+            const config = {
+                headers: { Authorization: `Bearer ${authToken}` },
+            };
+            const { data } = await axios.post(
+                `${process.env.REACT_APP_API_URL}/api/admin/reset-all-credits`,
+                {},
+                config
+            );
+
+            if (data.success) {
+                alert(`✅ ${data.message}\n👥 Users updated: ${data.usersUpdated}`);
+            }
+        } catch (error) {
+            console.error('Failed to reset credits:', error);
+            alert(error.response?.data?.msg || 'Failed to reset credits. Please try again.');
+        } finally {
+            setResettingCredits(false);
         }
     };
 
@@ -120,6 +197,79 @@ const SuperAdminPage = () => {
                             <p className="text-sm text-gray-500 mt-2">
                                 Downloads all orders for the selected date, grouped by restaurant.
                             </p>
+                        </div>
+
+                        {/* Credit All Users Section */}
+                        <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg shadow-lg p-6 border border-green-200">
+                            <h2 className="text-xl font-bold mb-4 text-gray-800">🎁 Add Credits to All Users</h2>
+                            <p className="text-sm text-gray-600 mb-4">
+                                Add custom FoodFreaky credits to all user accounts. This will <strong>add to</strong> their existing balance (custom amount + previous balance).
+                            </p>
+                            <div className="flex flex-col sm:flex-row gap-4 items-end">
+                                <div className="w-full sm:w-auto flex-1">
+                                    <label htmlFor="credit-amount" className="block text-sm font-medium text-gray-700 mb-1">
+                                        Credit Amount (₹)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        id="credit-amount"
+                                        min="0"
+                                        step="0.01"
+                                        value={creditAmount}
+                                        onChange={(e) => setCreditAmount(e.target.value)}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+                                        placeholder="Enter amount"
+                                    />
+                                </div>
+                                <button 
+                                    onClick={handleCreditAllUsers}
+                                    disabled={creditingUsers || !creditAmount || parseFloat(creditAmount) <= 0}
+                                    className="bg-green-500 hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-md transition duration-200 flex items-center gap-2 whitespace-nowrap"
+                                >
+                                    {creditingUsers ? (
+                                        <>
+                                            <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            Crediting Users...
+                                        </>
+                                    ) : (
+                                        <>
+                                            💰
+                                            Add Credits
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Reset All Credits Section */}
+                        <div className="bg-gradient-to-r from-red-50 to-orange-50 rounded-lg shadow-lg p-6 border border-red-200">
+                            <h2 className="text-xl font-bold mb-4 text-gray-800">⚠️ Reset All Credits</h2>
+                            <p className="text-sm text-gray-600 mb-4">
+                                <strong className="text-red-600">Danger Zone:</strong> This will reset <strong>ALL users'</strong> FoodFreaky credits to ₹0. This action cannot be undone.
+                            </p>
+                            <button 
+                                onClick={handleResetAllCredits}
+                                disabled={resettingCredits}
+                                className="bg-red-500 hover:bg-red-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-md transition duration-200 flex items-center gap-2"
+                            >
+                                {resettingCredits ? (
+                                    <>
+                                        <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        Resetting Credits...
+                                    </>
+                                ) : (
+                                    <>
+                                        🔄
+                                        Reset All Credits to ₹0
+                                    </>
+                                )}
+                            </button>
                         </div>
 
                         {/* Management Sections */}

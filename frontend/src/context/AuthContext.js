@@ -88,6 +88,13 @@ export const AuthProvider = ({ children }) => {
         setIsLoggedIn(false);
     };
 
+    const setAuth = (token, userData) => {
+        localStorage.setItem('authToken', token);
+        setAuthToken(token);
+        setUser(userData);
+        setIsLoggedIn(true);
+    };
+
     const value = {
         authToken,
         user,
@@ -95,6 +102,7 @@ export const AuthProvider = ({ children }) => {
         loading,
         login,
         logout,
+        setAuth,
     };
 
     return (

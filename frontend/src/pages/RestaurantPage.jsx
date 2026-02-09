@@ -4,6 +4,7 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import { useToast } from '../context/ToastContext';
+import { useFavorites } from '../context/FavoritesContext';
 import { useNavigate } from 'react-router-dom';
 import Modal from '../components/Modal';
 import Header from '../components/Header';
@@ -94,6 +95,7 @@ function RestaurantPage() {
     const { isLoggedIn } = useAuth();
     const { settings, isLoadingSettings } = useSettings();
     const { showSuccess, showWarning } = useToast();
+    const { toggleFavorite, isFavorited } = useFavorites();
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -205,11 +207,32 @@ function RestaurantPage() {
                              (minRating > 0 ? 1 : 0) + 
                              (maxDeliveryTime ? 1 : 0);
 
-    const openRestaurant = (restaurant) => {
-        setSelectedRestaurant(restaurant);
+    const openRestaurant = async (restaurant) => {
         setSearchQuery(''); // Reset search when opening restaurant
-        if (restaurant.menu && restaurant.menu.length > 0) {
-            setActiveCategory(restaurant.menu[0].category);
+        
+        // Fetch full restaurant details with menu data
+        try {
+            const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/api/restaurants/${restaurant._id}`);
+            if (data.success && data.data) {
+                const fullRestaurant = data.data;
+                setSelectedRestaurant(fullRestaurant);
+                if (fullRestaurant.menu && fullRestaurant.menu.length > 0) {
+                    setActiveCategory(fullRestaurant.menu[0].category);
+                }
+            } else {
+                // Fallback to the restaurant object from list if fetch fails
+                setSelectedRestaurant(restaurant);
+                if (restaurant.menu && restaurant.menu.length > 0) {
+                    setActiveCategory(restaurant.menu[0].category);
+                }
+            }
+        } catch (error) {
+            console.error('Failed to fetch restaurant details:', error);
+            // Fallback to the restaurant object from list if fetch fails
+            setSelectedRestaurant(restaurant);
+            if (restaurant.menu && restaurant.menu.length > 0) {
+                setActiveCategory(restaurant.menu[0].category);
+            }
         }
     };
 
@@ -497,17 +520,38 @@ function RestaurantPage() {
                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                              {filteredRestaurants.length > 0 ? (
                                  filteredRestaurants.map(restaurant => (
-                                 <div key={restaurant._id} onClick={() => openRestaurant(restaurant)} className={`restaurant-card bg-white rounded-2xl shadow-lg overflow-hidden cursor-pointer ${(!settings.isOrderingEnabled || restaurant.isAcceptingOrders === false) ? 'opacity-75 relative' : ''}`}>
+                                 <div key={restaurant._id} className={`restaurant-card bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden cursor-pointer relative ${(!settings.isOrderingEnabled || restaurant.isAcceptingOrders === false) ? 'opacity-75' : ''}`}>
+                                     {/* Favorite Button */}
+                                     <button
+                                         onClick={(e) => {
+                                             e.stopPropagation();
+                                             toggleFavorite(restaurant._id);
+                                         }}
+                                         className="absolute top-3 right-3 z-20 p-2 bg-white rounded-full shadow-md hover:shadow-lg transition-all duration-200 hover:scale-110"
+                                         aria-label={isFavorited(restaurant._id) ? 'Remove from favorites' : 'Add to favorites'}
+                                     >
+                                         <svg 
+                                             className={`w-5 h-5 transition-colors duration-200 ${isFavorited(restaurant._id) ? 'text-red-500 fill-current' : 'text-gray-400'}`}
+                                             fill={isFavorited(restaurant._id) ? 'currentColor' : 'none'}
+                                             stroke="currentColor"
+                                             viewBox="0 0 24 24"
+                                         >
+                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                         </svg>
+                                     </button>
+                                     
                                      {!settings.isOrderingEnabled && (
-                                         <div className="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold z-10">
+                                         <div className="absolute top-2 left-2 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold z-10">
                                              Closed
                                          </div>
                                      )}
                                      {settings.isOrderingEnabled && restaurant.isAcceptingOrders === false && (
-                                         <div className="absolute top-2 right-2 bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold z-10">
+                                         <div className="absolute top-2 left-2 bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold z-10">
                                              Not Accepting
                                          </div>
                                      )}
+                                     
+                                     <div onClick={() => openRestaurant(restaurant)}>
                                      {restaurant.imageUrl ? (
                                         <img src={restaurant.imageUrl} alt={restaurant.name} className="h-48 w-full object-cover" />
                                      ) : (
@@ -545,6 +589,7 @@ function RestaurantPage() {
                                                  <span key={tag} className="px-3 py-1 bg-orange-100 text-orange-600 text-xs rounded-full">{tag}</span>
                                              ))}
                                          </div>
+                                     </div>
                                      </div>
                                  </div>
                                  ))
@@ -632,7 +677,7 @@ function RestaurantPage() {
                         </div>
 
                         <div className="flex space-x-2 mb-8 overflow-x-auto">
-                            {selectedRestaurant.menu.map(menuItem => (
+                            {(selectedRestaurant.menu || []).map(menuItem => (
                                 <button 
                                     key={menuItem.category}
                                     onClick={() => {
@@ -647,26 +692,66 @@ function RestaurantPage() {
                         </div>
 
                         <div id="menuItems">
-                            {getFilteredItems().length > 0 ? (
-                                (() => {
-                                    // Group items by category when searching
-                                    const groupedItems = searchQuery.trim() 
-                                        ? getFilteredItems().reduce((acc, item) => {
-                                            const category = item.category || 'Other';
-                                            if (!acc[category]) acc[category] = [];
-                                            acc[category].push(item);
-                                            return acc;
-                                          }, {})
-                                        : { [activeCategory]: getFilteredItems() };
-                                    
-                                    return Object.entries(groupedItems).map(([category, items]) => (
-                                        <div key={category}>
-                                            {searchQuery.trim() && (
-                                                <h3 className="text-lg font-semibold text-white mb-3 mt-4 first:mt-0 drop-shadow-md capitalize">
-                                                    {category}
-                                                </h3>
-                                            )}
-                                            {items.map(item => (
+                            {(() => {
+                                const filteredItems = getFilteredItems();
+                                
+                                // Check if active category exists and has items
+                                const activeMenuCategory = selectedRestaurant.menu?.find(m => m.category === activeCategory);
+                                const hasItemsInCategory = activeMenuCategory && activeMenuCategory.items && activeMenuCategory.items.length > 0;
+                                
+                                // If no search query and category has no items, show empty category message
+                                if (!searchQuery.trim() && !hasItemsInCategory && activeMenuCategory) {
+                                    return (
+                                        <EmptyMenuItems 
+                                            searchQuery=""
+                                            activeCategory={activeCategory}
+                                            onClearSearch={() => setSearchQuery('')}
+                                            className="empty-state-white"
+                                        />
+                                    );
+                                }
+                                
+                                // If searching and no results found
+                                if (searchQuery.trim() && filteredItems.length === 0) {
+                                    return (
+                                        <EmptyMenuItems 
+                                            searchQuery={searchQuery}
+                                            onClearSearch={() => setSearchQuery('')}
+                                            className="empty-state-white"
+                                        />
+                                    );
+                                }
+                                
+                                // If no items at all (category doesn't exist or menu is empty)
+                                if (filteredItems.length === 0) {
+                                    return (
+                                        <EmptyMenuItems 
+                                            searchQuery=""
+                                            onClearSearch={() => setSearchQuery('')}
+                                            className="empty-state-white"
+                                        />
+                                    );
+                                }
+                                
+                                // Group items by category when searching
+                                const groupedItems = searchQuery.trim() 
+                                    ? filteredItems.reduce((acc, item) => {
+                                        const category = item.category || 'Other';
+                                        if (!acc[category]) acc[category] = [];
+                                        acc[category].push(item);
+                                        return acc;
+                                      }, {})
+                                    : { [activeCategory]: filteredItems };
+                                
+                                return Object.entries(groupedItems).map(([category, items]) => (
+                                    <div key={category}>
+                                        {searchQuery.trim() && (
+                                            <h3 className="text-lg font-semibold text-white mb-3 mt-4 first:mt-0 drop-shadow-md capitalize">
+                                                {category}
+                                            </h3>
+                                        )}
+                                        {items && items.length > 0 ? (
+                                            items.map(item => (
                                                 <div key={`${category}-${item.name}`} className="menu-item-card bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-4">
                                                     <div className="flex justify-between items-start">
                                                         <div className="flex-1">
@@ -713,17 +798,16 @@ function RestaurantPage() {
                                                         )}
                                                     </div>
                                                 </div>
-                                            ))}
-                                        </div>
-                                    ));
-                                })()
-                            ) : (
-                                <EmptyMenuItems 
-                                    searchQuery={searchQuery}
-                                    onClearSearch={() => setSearchQuery('')}
-                                    className="empty-state-white"
-                                />
-                            )}
+                                            ))
+                                        ) : (
+                                            <div className="text-center py-8 text-gray-500 bg-white rounded-xl p-6">
+                                                <p className="text-lg font-medium">No items in "{category}" category</p>
+                                                <p className="text-sm text-gray-400 mt-2">Try selecting a different category</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                ));
+                            })()}
                         </div>
                     </div>
                 )}

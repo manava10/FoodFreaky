@@ -6,6 +6,20 @@ const connectDB = require('./config/db');
 const { errorHandler } = require('./middleware/errorHandler');
 const { generalLimiter } = require('./middleware/rateLimiter');
 const { sanitizeInput } = require('./middleware/sanitizer');
+// Load logger with error handling
+let logger;
+try {
+    logger = require('./utils/logger');
+} catch (error) {
+    console.error('Failed to load logger:', error.message);
+    // Fallback to console logger if winston fails
+    logger = {
+        info: (...args) => console.log('[INFO]', ...args),
+        error: (...args) => console.error('[ERROR]', ...args),
+        warn: (...args) => console.warn('[WARN]', ...args),
+        debug: (...args) => console.log('[DEBUG]', ...args),
+    };
+}
 
 // Load environment variables
 dotenv.config();
@@ -36,8 +50,17 @@ const restaurants = require('./routes/restaurants');
 const coupons = require('./routes/coupons');
 const admin = require('./routes/admin');
 const settings = require('./routes/settings');
+const favorites = require('./routes/favorites');
+const credits = require('./routes/credits');
 
 const app = express();
+
+// Trust proxy - Required when behind Cloudflare or other reverse proxies
+// This allows Express to read the real client IP from X-Forwarded-For or CF-Connecting-IP headers
+if (process.env.NODE_ENV === 'production' || process.env.BEHIND_PROXY === 'true') {
+    app.set('trust proxy', 1); // Trust first proxy (Cloudflare)
+    logger.info('Trust proxy enabled - configured for Cloudflare/reverse proxy');
+}
 
 // Security middleware
 app.use(helmet({
@@ -84,6 +107,8 @@ app.use('/api/restaurants', restaurants);
 app.use('/api/coupons', coupons);
 app.use('/api/admin', admin);
 app.use('/api/settings', settings);
+app.use('/api/favorites', favorites);
+app.use('/api/credits', credits);
 
 // Health Check Route
 app.get('/health', (req, res) => {
@@ -100,5 +125,5 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5001;
 const server = app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+    logger.info(`Server is running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
 });

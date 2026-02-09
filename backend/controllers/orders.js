@@ -1,7 +1,9 @@
 const Order = require('../models/Order');
 const Coupon = require('../models/Coupon');
 const Restaurant = require('../models/Restaurant');
+const User = require('../models/User');
 const PDFDocument = require('pdfkit');
+const logger = require('../utils/logger');
 
 // @desc    Create new order
 // @route   POST /api/orders
@@ -16,7 +18,8 @@ exports.createOrder = async (req, res) => {
             shippingPrice: frontendShippingPrice, // Keep for logging/comparison
             totalPrice: frontendTotalPrice,   // Keep for logging/comparison
             couponUsed,
-            restaurant
+            restaurant,
+            creditsUsed: frontendCreditsUsed  // Credits user wants to use
         } = req.body;
 
         // ==========================================
@@ -89,7 +92,12 @@ exports.createOrder = async (req, res) => {
 
             // Log if frontend price doesn't match (potential manipulation attempt)
             if (item.price !== actualPrice) {
-                console.warn(`[SECURITY] Price mismatch for item "${item.name}": Frontend sent ₹${item.price}, DB has ₹${actualPrice}. User: ${req.user.id}`);
+                logger.warn('Price mismatch detected', {
+                    itemName: item.name,
+                    frontendPrice: item.price,
+                    databasePrice: actualPrice,
+                    userId: req.user.id
+                });
             }
 
             // Always use the DATABASE price, never the frontend price
@@ -178,15 +186,54 @@ exports.createOrder = async (req, res) => {
         }
 
         // ==========================================
-        // SECURITY: Calculate final total on server
+        // SECURITY: Handle FoodFreaky Credits
         // ==========================================
-        const calculatedTotalPrice = calculatedItemsPrice + calculatedTaxPrice + calculatedShippingPrice - calculatedDiscount;
-        const finalTotalPrice = Math.round(calculatedTotalPrice * 100) / 100;
+        let creditsToUse = 0;
+        if (frontendCreditsUsed && frontendCreditsUsed > 0) {
+            // Get user's current credits
+            const user = await User.findById(req.user.id);
+            const userCredits = user.credits || 0;
+
+            // Validate credits usage
+            const maxCreditsAllowed = Math.floor((calculatedItemsPrice + calculatedTaxPrice + calculatedShippingPrice - calculatedDiscount) * 0.05); // Max 5% of order value
+            const requestedCredits = Math.floor(frontendCreditsUsed);
+
+            // Use minimum of: requested credits, user's available credits, max allowed (5%)
+            creditsToUse = Math.min(requestedCredits, userCredits, maxCreditsAllowed);
+            creditsToUse = Math.max(0, creditsToUse); // Ensure non-negative
+
+            if (requestedCredits > maxCreditsAllowed) {
+                logger.warn('Credits usage exceeds 5% limit', {
+                    requested: requestedCredits,
+                    maxAllowed: maxCreditsAllowed,
+                    userId: req.user.id
+                });
+            }
+
+            if (requestedCredits > userCredits) {
+                logger.warn('Insufficient credits', {
+                    requested: requestedCredits,
+                    available: userCredits,
+                    userId: req.user.id
+                });
+            }
+        }
+
+        // ==========================================
+        // SECURITY: Calculate final total on server (after credits)
+        // ==========================================
+        const calculatedTotalPrice = calculatedItemsPrice + calculatedTaxPrice + calculatedShippingPrice - calculatedDiscount - creditsToUse;
+        const finalTotalPrice = Math.max(0, Math.round(calculatedTotalPrice * 100) / 100); // Ensure non-negative
 
         // Log any significant discrepancies (potential manipulation attempts)
         const priceDifference = Math.abs(finalTotalPrice - (frontendTotalPrice || 0));
         if (priceDifference > 1) { // More than ₹1 difference
-            console.warn(`[SECURITY] Total price discrepancy detected. Frontend: ₹${frontendTotalPrice}, Server: ₹${finalTotalPrice}. User: ${req.user.id}`);
+            logger.warn('Price discrepancy detected', {
+                frontendPrice: frontendTotalPrice,
+                serverPrice: finalTotalPrice,
+                difference: priceDifference,
+                userId: req.user.id
+            });
         }
 
         // ==========================================
@@ -201,10 +248,19 @@ exports.createOrder = async (req, res) => {
             taxPrice: calculatedTaxPrice,        // Server-calculated
             shippingPrice: calculatedShippingPrice, // Server-calculated
             totalPrice: finalTotalPrice,         // Server-calculated
-            couponUsed: validatedCouponCode      // Server-validated coupon code
+            couponUsed: validatedCouponCode,      // Server-validated coupon code
+            creditsUsed: creditsToUse             // Server-validated credits
         });
 
         const createdOrder = await order.save();
+
+        // Deduct credits from user account if used
+        if (creditsToUse > 0) {
+            await User.findByIdAndUpdate(req.user.id, {
+                $inc: { credits: -creditsToUse }
+            });
+            logger.info(`User ${req.user.id} used ${creditsToUse} credits on order ${createdOrder._id}`);
+        }
 
         // Increment coupon usage count after successful order
         if (validatedCouponCode) {
@@ -221,7 +277,12 @@ exports.createOrder = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Order creation error:', error);
+        logger.error('Order creation error:', {
+            error: error.message,
+            stack: error.stack,
+            userId: req.user?.id,
+            restaurantId: restaurant
+        });
 
         // Handle specific MongoDB errors
         if (error.name === 'CastError' && error.kind === 'ObjectId') {
@@ -236,10 +297,114 @@ exports.createOrder = async (req, res) => {
 // @route   GET /api/orders/myorders
 // @access  Private
 exports.getMyOrders = async (req, res) => {
-    const orders = await Order.find({ user: req.user.id })
-        .populate('restaurant', 'name')
-        .sort({ createdAt: -1 });
-    res.json({ success: true, count: orders.length, data: orders });
+    try {
+        // Pagination parameters
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+        
+        // Optional filters
+        const status = req.query.status;
+        const startDate = req.query.startDate;
+        const endDate = req.query.endDate;
+        
+        // Build query
+        const query = { user: req.user.id };
+        
+        if (status) {
+            query.status = status;
+        }
+        
+        if (startDate || endDate) {
+            query.createdAt = {};
+            if (startDate) {
+                query.createdAt.$gte = new Date(startDate);
+            }
+            if (endDate) {
+                query.createdAt.$lte = new Date(endDate);
+            }
+        }
+        
+        // Optimize: Use Promise.all to run count and find in parallel
+        // Use lean() for faster queries (returns plain JS objects instead of Mongoose documents)
+        const startTime = Date.now();
+        const [total, orders] = await Promise.all([
+            Order.countDocuments(query),
+            Order.find(query)
+                .populate('restaurant', 'name _id') // Only fetch name and _id
+                .select('-shippingAddress -review') // Exclude large fields not needed for list view
+                .lean() // Use lean() for 2-3x faster queries
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit)
+        ]);
+        const queryTime = Date.now() - startTime;
+        
+        // Log slow queries for monitoring
+        if (queryTime > 500) {
+            logger.warn('Slow orders query detected', { queryTime, userId: req.user.id, page, limit, total });
+        }
+        
+        logger.info(`User ${req.user.id} fetched orders`, { page, limit, total, count: orders.length, queryTime });
+        
+        res.json({ 
+            success: true, 
+            count: orders.length,
+            total,
+            page,
+            pages: Math.ceil(total / limit),
+            data: orders 
+        });
+    } catch (error) {
+        logger.error('Get orders error:', { error: error.message, stack: error.stack, userId: req.user.id });
+        res.status(500).json({ success: false, msg: 'Server error' });
+    }
+};
+
+// @desc    Get order details for reorder
+// @route   GET /api/orders/:id/reorder
+// @access  Private
+exports.getReorderData = async (req, res) => {
+    try {
+        const order = await Order.findById(req.params.id)
+            .populate('restaurant', 'name _id type');
+
+        if (!order) {
+            return res.status(404).json({ success: false, msg: 'Order not found' });
+        }
+
+        // Check if the order belongs to the user
+        if (order.user.toString() !== req.user.id) {
+            return res.status(401).json({ success: false, msg: 'Not authorized' });
+        }
+
+        // Check if restaurant still exists and is accepting orders
+        if (!order.restaurant) {
+            return res.status(400).json({ success: false, msg: 'Restaurant no longer exists' });
+        }
+
+        logger.info(`User ${req.user.id} requested reorder data for order ${req.params.id}`);
+
+        res.json({
+            success: true,
+            data: {
+                items: order.items,
+                restaurant: {
+                    id: order.restaurant._id,
+                    name: order.restaurant.name,
+                    type: order.restaurant.type || 'restaurant' // Include type for cart context
+                }
+            }
+        });
+    } catch (error) {
+        logger.error('Get reorder data error:', {
+            error: error.message,
+            stack: error.stack,
+            orderId: req.params.id,
+            userId: req.user.id
+        });
+        res.status(500).json({ success: false, msg: 'Server error' });
+    }
 };
 
 // @desc    Cancel an order
@@ -266,9 +431,10 @@ exports.cancelOrder = async (req, res) => {
         order.status = 'Cancelled';
         const updatedOrder = await order.save();
 
+        logger.info(`Order ${req.params.id} cancelled by user ${req.user.id}`);
         res.json(updatedOrder);
     } catch (error) {
-        console.error(error);
+        logger.error('Cancel order error:', { error: error.message, stack: error.stack, orderId: req.params.id, userId: req.user.id });
         res.status(500).json({ msg: 'Server Error' });
     }
 };
@@ -330,10 +496,11 @@ exports.rateOrder = async (req, res) => {
 
         await restaurant.save();
 
+        logger.info(`Order ${req.params.id} rated ${rating} stars by user ${req.user.id}`);
         res.json({ msg: 'Order rated successfully' });
 
     } catch (error) {
-        console.error(error.message);
+        logger.error('Rate order error:', { error: error.message, stack: error.stack, orderId: req.params.id, userId: req.user.id });
         res.status(500).send('Server Error');
     }
 };
@@ -361,10 +528,11 @@ exports.getOrderInvoice = async (req, res) => {
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename="invoice-${order._id}.pdf"`);
 
+        logger.info(`Invoice generated for order ${req.params.id} by user ${req.user.id}`);
         res.send(pdfBuffer);
 
     } catch (error) {
-        console.error('Error generating invoice:', error);
+        logger.error('Invoice generation error:', { error: error.message, stack: error.stack, orderId: req.params.id, userId: req.user.id });
         res.status(500).json({ msg: 'Server Error' });
     }
 };

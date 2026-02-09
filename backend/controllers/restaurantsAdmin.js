@@ -1,14 +1,30 @@
 const Restaurant = require('../models/Restaurant');
+const logger = require('../utils/logger');
 
 // @desc    Get all restaurants (for admins)
 // @route   GET /api/admin/restaurants
 // @access  Private (Admin)
 exports.getAllRestaurants = async (req, res) => {
     try {
-        const restaurants = await Restaurant.find();
+        // Optimize: Exclude menu data for list view (can be fetched separately if needed)
+        // Use lean() for faster queries (returns plain JS objects instead of Mongoose documents)
+        const startTime = Date.now();
+        const restaurants = await Restaurant.find()
+            .select('-menu') // Exclude menu data for list view - this is the key optimization!
+            .lean() // Use lean() for 2-3x faster queries
+            .sort({ createdAt: -1 });
+        const queryTime = Date.now() - startTime;
+
+        // Log slow queries for monitoring
+        if (queryTime > 1000) {
+            logger.warn('Slow admin restaurants query detected', { queryTime, count: restaurants.length });
+        }
+
+        logger.info(`Admin ${req.user.id} fetched restaurants`, { count: restaurants.length, queryTime });
+        
         res.json({ success: true, data: restaurants });
     } catch (error) {
-        console.error(error);
+        logger.error('Get all restaurants error:', { error: error.message, stack: error.stack, userId: req.user?.id });
         res.status(500).json({ msg: 'Server Error' });
     }
 };

@@ -18,13 +18,24 @@ const UserSchema = new mongoose.Schema({
     },
     contactNumber: {
         type: String,
-        required: [true, 'Please add a contact number'],
+        required: function() {
+            // Contact number is required only if user is not signing up with Google
+            return !this.googleId;
+        },
     },
     password: {
         type: String,
-        required: [true, 'Please add a password'],
+        required: function() {
+            // Password is required only if user is not signing up with Google
+            return !this.googleId;
+        },
         minlength: 6,
         select: false, // Do not return password by default
+    },
+    googleId: {
+        type: String,
+        sparse: true, // Allows multiple null values but enforces uniqueness for non-null values
+        unique: true,
     },
     otp: {
         type: String,
@@ -34,7 +45,10 @@ const UserSchema = new mongoose.Schema({
     },
     isVerified: {
         type: Boolean,
-        default: false,
+        default: function() {
+            // Google OAuth users are automatically verified
+            return !!this.googleId;
+        },
     },
     role: {
         type: String,
@@ -43,6 +57,15 @@ const UserSchema = new mongoose.Schema({
     },
     resetPasswordToken: String,
     resetPasswordExpire: Date,
+    favorites: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Restaurant'
+    }],
+    credits: {
+        type: Number,
+        default: 0,
+        min: 0,
+    },
     createdAt: {
         type: Date,
         default: Date.now,
@@ -55,14 +78,16 @@ UserSchema.index({ resetPasswordToken: 1, resetPasswordExpire: 1 }); // For pass
 UserSchema.index({ email: 1, otp: 1, otpExpires: 1 }); // For OTP verification
 UserSchema.index({ role: 1 }); // For admin queries
 
-// Encrypt password using bcrypt
+// Encrypt password using bcrypt (only if password is provided and modified)
 UserSchema.pre('save', async function (next) {
-    if (!this.isModified('password')) {
-        next();
+    // Skip password hashing if user is signing up with Google (no password) or password not modified
+    if (!this.password || !this.isModified('password')) {
+        return next();
     }
 
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
+    next();
 });
 
 // Match user entered password to hashed password in database

@@ -68,6 +68,8 @@ RestaurantSchema.index({ cuisine: 1 });
 RestaurantSchema.index({ tags: 1 });
 RestaurantSchema.index({ averageRating: -1 });
 RestaurantSchema.index({ type: 1 });
+RestaurantSchema.index({ createdAt: -1 }); // Index for sorting by creation date
 RestaurantSchema.index({ isAcceptingOrders: 1, type: 1 }); // Compound index for filtering open restaurants
+RestaurantSchema.index({ type: 1, createdAt: -1 }); // Compound index for type + sort queries
 
 module.exports = mongoose.model('Restaurant', RestaurantSchema);

@@ -8,7 +8,7 @@ const HomePage = () => {
     const navigate = useNavigate();
 
     return (
-        <div className="h-screen relative flex flex-col overflow-hidden">
+        <div className="h-screen relative flex flex-col overflow-hidden dark:bg-gray-900">
             {/* Food Background */}
             <div
                 className="absolute inset-0 bg-cover bg-center bg-no-repeat"

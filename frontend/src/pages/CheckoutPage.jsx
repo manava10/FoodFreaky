@@ -26,12 +26,37 @@ const CheckoutPage = () => {
     const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
     const [couponSuccess, setCouponSuccess] = useState(false);
     const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+    const [userCredits, setUserCredits] = useState(0);
+    const [creditsToUse, setCreditsToUse] = useState(0);
+    const [loadingCredits, setLoadingCredits] = useState(true);
 
     useEffect(() => {
         if (user && user.contactNumber) {
             setContactNumber(user.contactNumber);
         }
     }, [user]);
+
+    // Fetch user credits
+    useEffect(() => {
+        const fetchCredits = async () => {
+            if (!authToken) {
+                setLoadingCredits(false);
+                return;
+            }
+            try {
+                const config = {
+                    headers: { Authorization: `Bearer ${authToken}` },
+                };
+                const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/api/credits`, config);
+                setUserCredits(data.credits || 0);
+            } catch (error) {
+                console.error('Failed to fetch credits:', error);
+            } finally {
+                setLoadingCredits(false);
+            }
+        };
+        fetchCredits();
+    }, [authToken]);
 
     const handleRemoveCoupon = useCallback(() => {
         setDiscount(0);
@@ -96,7 +121,7 @@ const CheckoutPage = () => {
     }, [cartTotal, appliedCouponCode, handleApplyCoupon]);
     
     const subtotal = cartTotal;
-    const isFruitStall = cartItems.length > 0 && cartItems[0].restaurant?.type === 'fruit_stall';
+    const isFruitStall = cartItems.length > 0 && cartItems[0]?.restaurant?.type === 'fruit_stall';
     
     // Calculate dynamic Tax (Paid to restaurant)
     let taxAmount = 0;
@@ -125,16 +150,40 @@ const CheckoutPage = () => {
         }
     }
 
-    const finalTotal = subtotal + taxAmount + deliveryCharge - discount;
+    // Calculate max credits that can be used (5% of order value before credits)
+    const orderValueBeforeCredits = subtotal + taxAmount + deliveryCharge - discount;
+    const maxCreditsAllowed = Math.floor(orderValueBeforeCredits * 0.05); // Max 5% of order value
+    const effectiveCreditsToUse = Math.min(creditsToUse, userCredits, maxCreditsAllowed);
+    
+    const finalTotal = Math.max(0, orderValueBeforeCredits - effectiveCreditsToUse);
 
     const handlePlaceOrder = async () => {
         if (!address || !contactNumber) {
             showError('Please fill in your address and contact number.');
             return;
         }
+        
+        // Validate cart has items
+        if (!cartItems || cartItems.length === 0) {
+            showError('Your cart is empty. Please add items before placing an order.');
+            return;
+        }
+        
+        // Validate restaurant ID
+        const restaurantId = cartItems[0]?.restaurant?.id;
+        if (!restaurantId) {
+            showError('Restaurant information is missing. Please clear your cart and try again.');
+            console.error('Cart items:', cartItems);
+            console.error('First cart item restaurant:', cartItems[0]?.restaurant);
+            return;
+        }
+        
+        // Ensure restaurant ID is a string (MongoDB ObjectIds are strings)
+        const restaurantIdString = String(restaurantId);
+        
         setIsPlacingOrder(true);
         const orderData = {
-            items: cartItems.map(item => ({
+            items: (cartItems || []).map(item => ({
                 name: item.name,
                 price: item.price,
                 quantity: item.quantity,
@@ -145,8 +194,15 @@ const CheckoutPage = () => {
             shippingPrice: deliveryCharge,
             totalPrice: finalTotal,
             couponUsed: discount > 0 ? appliedCouponCode : null,
-            restaurant: cartItems[0]?.restaurant?.id || null
+            creditsUsed: effectiveCreditsToUse > 0 ? effectiveCreditsToUse : 0,
+            restaurant: restaurantIdString
         };
+        
+        console.log('Placing order with data:', {
+            ...orderData,
+            itemsCount: orderData.items.length,
+            restaurantId: restaurantIdString
+        });
 
         try {
             const config = {
@@ -157,12 +213,41 @@ const CheckoutPage = () => {
             };
             await axios.post(`${process.env.REACT_APP_API_URL}/api/orders`, orderData, config);
             
+            // Refresh credits if used
+            if (effectiveCreditsToUse > 0) {
+                try {
+                    const creditsConfig = {
+                        headers: { Authorization: `Bearer ${authToken}` },
+                    };
+                    const { data: creditsData } = await axios.get(`${process.env.REACT_APP_API_URL}/api/credits`, creditsConfig);
+                    setUserCredits(creditsData.credits || 0);
+                    setCreditsToUse(0);
+                } catch (error) {
+                    console.error('Failed to refresh credits:', error);
+                }
+            }
+            
             // Show custom success modal instead of alert
             setIsSuccessModalOpen(true);
 
         } catch (error) {
             console.error('Order placement error:', error);
-            showError('Failed to place order. Please try again.');
+            
+            // Check for validation errors from backend
+            if (error.response?.data?.errors && Array.isArray(error.response.data.errors)) {
+                // Multiple validation errors
+                const errorMessages = error.response.data.errors.map(err => err.message || `${err.field}: ${err.message}`).join('. ');
+                showError(errorMessages);
+            } else if (error.response?.data?.msg) {
+                // Single error message
+                showError(error.response.data.msg);
+            } else if (error.message) {
+                // Network or other error
+                showError(error.message);
+            } else {
+                // Fallback
+                showError('Failed to place order. Please try again.');
+            }
         } finally {
             setIsPlacingOrder(false);
         }
@@ -193,8 +278,8 @@ const CheckoutPage = () => {
     }
     
     return (
-        <div className="checkout-page-container">
-            <div className="fixed inset-0 bg-black bg-opacity-60 z-0"></div>
+        <div className="checkout-page-container dark:bg-gray-900">
+            <div className="fixed inset-0 bg-black bg-opacity-60 dark:bg-opacity-70 z-0"></div>
             <Header />
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
                 <h1 className="text-4xl font-bold text-white text-center mb-8">Checkout</h1>
@@ -227,7 +312,7 @@ const CheckoutPage = () => {
                     <div className="order-summary">
                         <h2 className="card-title">Your Order</h2>
                         <div className="order-items">
-                            {cartItems.map(item => (
+                            {(cartItems || []).map(item => (
                                 <div key={item.name} className="summary-item">
                                     <span>{item.name} (x{item.quantity})</span>
                                     <span>₹{(item.price * item.quantity).toFixed(2)}</span>
@@ -265,6 +350,54 @@ const CheckoutPage = () => {
                             )}
                         </div>
                         {couponError && <p className="coupon-error">{couponError}</p>}
+                        
+                        {/* FoodFreaky Credits Section */}
+                        {!loadingCredits && userCredits > 0 && (
+                            <div className="credits-section">
+                                <div className="credits-info">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            🎁 FoodFreaky Credits Available
+                                        </span>
+                                        <span className="text-sm font-bold text-orange-600 dark:text-orange-400">
+                                            ₹{userCredits}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                                        Use up to 5% of order value (Max: ₹{maxCreditsAllowed})
+                                    </p>
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max={Math.min(userCredits, maxCreditsAllowed)}
+                                            value={creditsToUse}
+                                            onChange={(e) => {
+                                                const value = Math.max(0, Math.min(parseInt(e.target.value) || 0, Math.min(userCredits, maxCreditsAllowed)));
+                                                setCreditsToUse(value);
+                                            }}
+                                            className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
+                                            placeholder="Enter credits to use"
+                                        />
+                                        <button
+                                            onClick={() => setCreditsToUse(Math.min(userCredits, maxCreditsAllowed))}
+                                            className="px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm font-medium transition-colors"
+                                        >
+                                            Use Max
+                                        </button>
+                                        {creditsToUse > 0 && (
+                                            <button
+                                                onClick={() => setCreditsToUse(0)}
+                                                className="px-3 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg text-sm font-medium transition-colors"
+                                            >
+                                                Clear
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                        
                         <div className="price-details">
                             <div className="price-row">
                                 <span>Subtotal</span>
@@ -284,6 +417,12 @@ const CheckoutPage = () => {
                                 <div className="price-row discount">
                                     <span>Discount</span>
                                     <span>-₹{discount.toFixed(2)}</span>
+                                </div>
+                            )}
+                            {effectiveCreditsToUse > 0 && (
+                                <div className="price-row discount">
+                                    <span>FoodFreaky Credits</span>
+                                    <span>-₹{effectiveCreditsToUse.toFixed(2)}</span>
                                 </div>
                             )}
                             <div className="price-row total">

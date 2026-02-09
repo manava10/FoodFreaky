@@ -104,11 +104,32 @@ function FruitPage() {
         fetchFruitStalls();
     }, []);
 
-    const openStall = (stall) => {
-        setSelectedStall(stall);
+    const openStall = async (stall) => {
         setSearchQuery('');
-        if (stall.menu && stall.menu.length > 0) {
-            setActiveCategory(stall.menu[0].category);
+        
+        // Fetch full stall details with menu data
+        try {
+            const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/api/restaurants/${stall._id}`);
+            if (data.success && data.data) {
+                const fullStall = data.data;
+                setSelectedStall(fullStall);
+                if (fullStall.menu && fullStall.menu.length > 0) {
+                    setActiveCategory(fullStall.menu[0].category);
+                }
+            } else {
+                // Fallback to the stall object from list if fetch fails
+                setSelectedStall(stall);
+                if (stall.menu && stall.menu.length > 0) {
+                    setActiveCategory(stall.menu[0].category);
+                }
+            }
+        } catch (error) {
+            console.error('Failed to fetch stall details:', error);
+            // Fallback to the stall object from list if fetch fails
+            setSelectedStall(stall);
+            if (stall.menu && stall.menu.length > 0) {
+                setActiveCategory(stall.menu[0].category);
+            }
         }
     };
 
@@ -325,7 +346,7 @@ function FruitPage() {
                         </div>
 
                         <div className="flex space-x-2 mb-8 overflow-x-auto">
-                            {selectedStall.menu.map(menuItem => (
+                            {(selectedStall.menu || []).map(menuItem => (
                                 <button 
                                     key={menuItem.category}
                                     onClick={() => {

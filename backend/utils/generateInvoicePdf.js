@@ -98,20 +98,66 @@ const generateInvoicePdf = (order) => {
 
         // Display discount if it was applied
         const subtotalWithCharges = order.itemsPrice + order.taxPrice + order.shippingPrice;
+        let currentY = summaryTop + 60;
+        
         if (order.totalPrice < subtotalWithCharges) {
             const discount = subtotalWithCharges - order.totalPrice;
             const discountLabel = order.couponUsed ? `Discount (${order.couponUsed})` : 'Discount';
             doc.fillColor('#059669'); // Green color for discount
-            doc.text(`${discountLabel}:`, 370, summaryTop + 60, { width: 70, align: 'right' });
-            doc.text(`- ₹${discount.toFixed(2)}`, 0, summaryTop + 60, { align: 'right' });
-            finalTotalTop += 20; // Move grand total down
+            doc.text(`${discountLabel}:`, 370, currentY, { width: 70, align: 'right' });
+            doc.text(`- ₹${discount.toFixed(2)}`, 0, currentY, { align: 'right' });
+            currentY += 20; // Move down for next item
         }
 
-        const totalTop = finalTotalTop;
+        // Display FoodFreaky Credits Used (if any)
+        if (order.creditsUsed && order.creditsUsed > 0) {
+            doc.fillColor('#059669'); // Green color for credits used
+            doc.font('Helvetica');
+            doc.text(`FoodFreaky Credits Used:`, 370, currentY, { width: 70, align: 'right' });
+            doc.text(`- ₹${order.creditsUsed.toFixed(2)}`, 0, currentY, { align: 'right' });
+            currentY += 20; // Move down for next item
+        }
+
+        const totalTop = currentY;
         doc.rect(360, totalTop - 5, 190, 20).fill('#EEE');
         doc.font('Helvetica-Bold');
         doc.fillColor('#000').text(`Grand Total:`, 370, totalTop, { width: 70, align: 'right' });
         doc.text(`₹${order.totalPrice.toFixed(2)}`, 0, totalTop, { align: 'right' });
+
+        // FoodFreaky Credits Earned Section (only show if order is delivered and credits were earned)
+        if (order.status === 'Delivered' && order.creditsEarned && order.creditsEarned > 0) {
+            const creditsSectionTop = totalTop + 40;
+            
+            // Add a separator line
+            doc.moveTo(50, creditsSectionTop - 10)
+               .lineTo(550, creditsSectionTop - 10)
+               .strokeColor('#DDD')
+               .stroke();
+            
+            // Credits earned box with brand color
+            doc.rect(50, creditsSectionTop, 500, 35).fill('#FFF7ED'); // Light orange background
+            doc.rect(50, creditsSectionTop, 500, 35).stroke('#F97316').lineWidth(2); // Orange border
+            
+            doc.font('Helvetica-Bold')
+               .fontSize(11)
+               .fillColor('#F97316') // Brand orange color
+               .text('🎉 FoodFreaky Credits Earned!', 60, creditsSectionTop + 5);
+            
+            doc.font('Helvetica')
+               .fontSize(10)
+               .fillColor('#333')
+               .text(`You have earned ${order.creditsEarned} FoodFreaky credits (2% of order value)`, 60, creditsSectionTop + 20, { width: 400 });
+            
+            doc.font('Helvetica-Bold')
+               .fontSize(12)
+               .fillColor('#F97316')
+               .text(`+${order.creditsEarned} Credits`, 0, creditsSectionTop + 15, { align: 'right' });
+            
+            doc.font('Helvetica')
+               .fontSize(8)
+               .fillColor('#666')
+               .text('Credits can be used up to 5% of your next order value', 60, creditsSectionTop + 35, { width: 480 });
+        }
 
         // Footer Section
         const signatureY = 650; // Using a fixed, safe Y coordinate

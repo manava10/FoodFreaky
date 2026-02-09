@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
-import Modal from './Modal';
+import { useTheme } from '../context/ThemeContext';
+import UserProfile from './UserProfile';
 import './Header.css';
 
 const Header = () => {
     const { isLoggedIn, user, logout } = useAuth();
     const { cartCount, openCart, clearCart } = useCart();
+    const { theme, toggleTheme } = useTheme();
     const navigate = useNavigate();
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -46,6 +48,21 @@ const Header = () => {
                     {/* Desktop Navigation */}
                     <div className="hidden md:flex items-center space-x-4">
                         <button
+                            onClick={toggleTheme}
+                            className="header-btn-icon"
+                            aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+                        >
+                            {theme === 'light' ? (
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                                </svg>
+                            ) : (
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                                </svg>
+                            )}
+                        </button>
+                        <button
                             onClick={() => navigate('/restaurants')}
                             className="header-btn-primary primary"
                         >
@@ -57,6 +74,14 @@ const Header = () => {
                         >
                             Fruits
                         </button>
+                        {isLoggedIn && (
+                            <button
+                                onClick={() => navigate('/favorites')}
+                                className="header-btn-primary primary"
+                            >
+                                Favorites
+                            </button>
+                        )}
                         {isLoggedIn ? (
                             <>
                                 <button onClick={() => navigate('/dashboard')} className="header-btn-primary primary">Dashboard</button>
@@ -91,6 +116,21 @@ const Header = () => {
 
                     {/* Mobile Menu Button */}
                     <div className="md:hidden flex items-center">
+                        <button
+                            onClick={toggleTheme}
+                            className="header-btn-icon mr-2"
+                            aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+                        >
+                            {theme === 'light' ? (
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                                </svg>
+                            ) : (
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                                </svg>
+                            )}
+                        </button>
                         <button onClick={openCart} className="header-btn-icon cart-btn mr-2">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -112,6 +152,9 @@ const Header = () => {
                 <div className="flex flex-col items-center space-y-8">
                     <button onClick={() => handleMobileLinkClick('/restaurants')} className="mobile-menu-link">Restaurants</button>
                     <button onClick={() => handleMobileLinkClick('/fruits')} className="mobile-menu-link">Fruits</button>
+                    {isLoggedIn && (
+                        <button onClick={() => handleMobileLinkClick('/favorites')} className="mobile-menu-link">Favorites</button>
+                    )}
                     {isLoggedIn ? (
                         <>
                             <button onClick={() => { handleMobileLinkClick('/dashboard'); toggleProfileModal(); }} className="mobile-menu-link">My Profile</button>
@@ -126,30 +169,10 @@ const Header = () => {
                 </div>
             </div>
 
-            {user && (
-                <Modal 
-                    show={isProfileModalOpen} 
-                    onClose={toggleProfileModal} 
-                    title="My Profile"
-                    className="profile-modal"
-                >
-                    <div className="profile-modal-content">
-                        <p><strong>Name:</strong> {user.name}</p>
-                        <p><strong>Email:</strong> {user.email}</p>
-                        {user.contactNumber && <p><strong>Phone:</strong> {user.contactNumber}</p>}
-                        <p><strong>Joined:</strong> {new Date(user.createdAt).toLocaleDateString()}</p>
-                        <button 
-                            className="view-dashboard-btn" 
-                            onClick={() => {
-                                toggleProfileModal();
-                                navigate('/dashboard');
-                            }}
-                        >
-                            View Full Dashboard
-                        </button>
-                    </div>
-                </Modal>
-            )}
+            <UserProfile 
+                isOpen={isProfileModalOpen} 
+                onClose={toggleProfileModal}
+            />
         </>
     );
 };

@@ -5,12 +5,18 @@ import { EmptyCart } from './EmptyState';
 import './Cart.css';
 
 const Cart = () => {
-    const { cartItems, updateQuantity, cartTotal, isCartOpen, closeCart } = useCart();
+    const { cartItems, updateQuantity, cartTotal, isCartOpen, closeCart, clearCart } = useCart();
     const navigate = useNavigate();
 
     const handleCheckout = () => {
         closeCart();
         navigate('/checkout');
+    };
+
+    const handleClearCart = () => {
+        if (window.confirm('Are you sure you want to clear your cart? This action cannot be undone.')) {
+            clearCart();
+        }
     };
 
     if (!isCartOpen) return null;
@@ -20,7 +26,20 @@ const Cart = () => {
             <div className="cart-sidebar" onClick={(e) => e.stopPropagation()}>
                 <div className="cart-header">
                     <h2>Your Cart</h2>
-                    <button onClick={closeCart} className="close-cart-btn">&times;</button>
+                    <div className="cart-header-actions">
+                        {cartItems.length > 0 && (
+                            <button 
+                                onClick={handleClearCart} 
+                                className="clear-cart-header-btn"
+                                title="Clear cart"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
+                        )}
+                        <button onClick={closeCart} className="close-cart-btn">&times;</button>
+                    </div>
                 </div>
                 <div className="cart-body">
                     {cartItems.length === 0 ? (
@@ -32,9 +51,9 @@ const Cart = () => {
                         <>
                             <div className="cart-restaurant-header">
                                 <h3>Ordering from:</h3>
-                                <p>{cartItems[0].restaurant.name}</p>
+                                <p>{cartItems[0]?.restaurant?.name || 'Restaurant'}</p>
                             </div>
-                            {cartItems.map(item => (
+                            {(cartItems || []).map(item => (
                                 <div key={item.name} className="cart-item">
                                     <div className="cart-item-info">
                                         <p className="item-name">{item.name}</p>

@@ -1,12 +1,125 @@
 const Order = require('../models/Order');
+const User = require('../models/User');
 const sendEmail = require('../utils/sendEmail');
 const generateInvoicePdf = require('../utils/generateInvoicePdf');
+const logger = require('../utils/logger');
+
+// @desc    Credit all users with FoodFreaky credits
+// @route   POST /api/admin/credit-all-users
+// @access  Private (Admin only)
+exports.creditAllUsers = async (req, res) => {
+    try {
+        // Only super admin can credit all users
+        if (req.user.role !== 'admin') {
+            return res.status(403).json({ success: false, msg: 'Only super admin can credit all users' });
+        }
+
+        const creditAmount = req.body.amount || 25; // Default to 25, but allow custom amount
+        const setToAmount = req.body.setToAmount; // If provided, set credits to this amount instead of adding
+
+        let result;
+        let message;
+        let totalCredits;
+
+        if (setToAmount !== undefined) {
+            // Set credits to a specific amount (X rupees) regardless of previous balance
+            result = await User.updateMany(
+                {}, // Match all users
+                { 
+                    $set: { credits: setToAmount } // Set credits to the specified amount
+                }
+            );
+
+            totalCredits = result.modifiedCount * setToAmount;
+            message = `Successfully set credits to ₹${setToAmount} for ${result.modifiedCount} users`;
+
+            logger.info(`Admin ${req.user.id} set credits to ₹${setToAmount} for all users`, { 
+                usersUpdated: result.modifiedCount, 
+                totalCredits 
+            });
+        } else {
+            // Add credits to existing balance (X + previous)
+            result = await User.updateMany(
+                {}, // Match all users
+                { 
+                    $inc: { credits: creditAmount } // Increment credits by the specified amount
+                }
+            );
+
+            totalCredits = result.modifiedCount * creditAmount;
+            message = `Successfully added ₹${creditAmount} to ${result.modifiedCount} users (X + previous balance)`;
+
+            logger.info(`Admin ${req.user.id} added ₹${creditAmount} to all users`, { 
+                usersCredited: result.modifiedCount, 
+                totalCredits 
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: message,
+            usersCredited: result.modifiedCount,
+            totalCreditsDistributed: totalCredits,
+            operation: setToAmount !== undefined ? 'set' : 'add'
+        });
+    } catch (error) {
+        logger.error('Credit all users error:', {
+            error: error.message,
+            stack: error.stack,
+            userId: req.user?.id
+        });
+        res.status(500).json({ success: false, msg: 'Server error' });
+    }
+};
+
+// @desc    Reset all users' credits to 0
+// @route   POST /api/admin/reset-all-credits
+// @access  Private (Admin)
+exports.resetAllCredits = async (req, res) => {
+    try {
+        // Only super admin can reset all credits
+        if (req.user.role !== 'admin') {
+            return res.status(403).json({ success: false, msg: 'Only super admin can reset all credits' });
+        }
+
+        const result = await User.updateMany(
+            {}, // Match all users
+            { $set: { credits: 0 } } // Set credits to 0
+        );
+
+        logger.info(`Admin ${req.user.id} reset all users' credits to 0`, {
+            usersUpdated: result.modifiedCount
+        });
+
+        res.status(200).json({
+            success: true,
+            message: `Successfully reset credits to ₹0 for ${result.modifiedCount} users`,
+            usersUpdated: result.modifiedCount
+        });
+    } catch (error) {
+        logger.error('Reset all credits error:', {
+            error: error.message,
+            stack: error.stack,
+            userId: req.user?.id
+        });
+        res.status(500).json({ success: false, msg: 'Server error' });
+    }
+};
 
 // @desc    Get all orders (for admins)
 // @route   GET /api/admin/orders
 // @access  Private (Admin, DeliveryAdmin)
 exports.getAllOrders = async (req, res) => {
     try {
+        // Pagination parameters
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 20;
+        const skip = (page - 1) * limit;
+        
+        // Optional filters
+        const status = req.query.status;
+        const restaurantId = req.query.restaurantId;
+        
         let query = {};
 
         // If the user is a delivery admin, only show them today's orders
@@ -19,15 +132,38 @@ exports.getAllOrders = async (req, res) => {
 
             query.createdAt = { $gte: startOfDay, $lte: endOfDay };
         }
+        
+        // Apply filters
+        if (status) {
+            query.status = status;
+        }
+        
+        if (restaurantId) {
+            query.restaurant = restaurantId;
+        }
+
+        // Get total count for pagination
+        const total = await Order.countDocuments(query);
 
         const orders = await Order.find(query)
             .populate('user', 'name email contactNumber')
             .populate('restaurant', 'name')
-            .sort({ createdAt: -1 });
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
             
-        res.json({ success: true, data: orders });
+        logger.info(`Admin ${req.user.id} fetched orders`, { page, limit, total, count: orders.length, role: req.user.role });
+            
+        res.json({ 
+            success: true, 
+            count: orders.length,
+            total,
+            page,
+            pages: Math.ceil(total / limit),
+            data: orders 
+        });
     } catch (error) {
-        console.error('Failed to fetch orders:', error);
+        logger.error('Failed to fetch orders:', { error: error.message, stack: error.stack, userId: req.user.id });
         res.status(500).json({ msg: 'Server Error' });
     }
 };
@@ -52,6 +188,20 @@ exports.updateOrderStatus = async (req, res) => {
 
         const oldStatus = order.status;
         order.status = status;
+        
+        // If the status changed to 'Delivered', award credits (2% of order value)
+        if (status === 'Delivered' && oldStatus !== 'Delivered' && !order.creditsEarned) {
+            const creditsToAward = Math.floor(order.totalPrice * 0.02); // 2% of order value
+            order.creditsEarned = creditsToAward;
+            
+            // Add credits to user account
+            await User.findByIdAndUpdate(order.user, {
+                $inc: { credits: creditsToAward }
+            });
+            
+            logger.info(`Awarded ${creditsToAward} credits to user ${order.user} for order ${order._id}`);
+        }
+        
         const updatedOrder = await order.save();
 
         // If the status changed to 'Delivered', send an email with the invoice
@@ -59,10 +209,19 @@ exports.updateOrderStatus = async (req, res) => {
             try {
                 const pdfBuffer = await generateInvoicePdf(order);
                 
+                // Build email message with credits information
+                let emailHtml = `<p>Hi ${order.user.name},</p><p>Thank you for your order! We're pleased to let you know that your order has been delivered. Your invoice is attached to this email.</p>`;
+                
+                if (order.creditsEarned && order.creditsEarned > 0) {
+                    emailHtml += `<p><strong>🎉 Great news!</strong> You have earned <strong>${order.creditsEarned} FoodFreaky credits</strong> (2% of your order value) which have been added to your account. You can use these credits on your next order (up to 5% of the order value).</p>`;
+                }
+                
+                emailHtml += `<p>We hope you enjoy your meal!</p>`;
+                
                 await sendEmail({
                     email: order.user.email,
                     subject: `Your FoodFreaky Order #${order._id.toString().substring(0, 8)} has been delivered!`,
-                    html: `<p>Hi ${order.user.name},</p><p>Thank you for your order! We're pleased to let you know that your order has been delivered. Your invoice is attached to this email.</p><p>We hope you enjoy your meal!</p>`,
+                    html: emailHtml,
                     attachments: [
                         {
                             filename: `invoice-${order._id}.pdf`,

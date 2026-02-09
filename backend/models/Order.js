@@ -63,6 +63,16 @@ const OrderSchema = new mongoose.Schema({
     review: {
         type: String,
     },
+    creditsUsed: {
+        type: Number,
+        default: 0,
+        min: 0,
+    },
+    creditsEarned: {
+        type: Number,
+        default: 0,
+        min: 0,
+    },
 });
 
 // Indexes for better query performance
@@ -70,6 +80,8 @@ OrderSchema.index({ user: 1 });
 OrderSchema.index({ restaurant: 1 });
 OrderSchema.index({ status: 1 });
 OrderSchema.index({ createdAt: -1 });
-OrderSchema.index({ user: 1, createdAt: -1 });
+OrderSchema.index({ user: 1, createdAt: -1 }); // For user orders sorted by date
+OrderSchema.index({ user: 1, status: 1, createdAt: -1 }); // Compound index for filtered user orders
+OrderSchema.index({ user: 1, createdAt: -1, status: 1 }); // Alternative compound index
 
 module.exports = mongoose.model('Order', OrderSchema);

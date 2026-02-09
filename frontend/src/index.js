@@ -7,22 +7,31 @@ import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
 import { SettingsProvider } from './context/SettingsContext';
 import { ToastProvider } from './context/ToastContext';
+import { FavoritesProvider } from './context/FavoritesContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { BrowserRouter as Router } from 'react-router-dom';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <Router>
-      <AuthProvider>
-        <SettingsProvider>
-          <ToastProvider>
-            <CartProvider>
-              <App />
-            </CartProvider>
-          </ToastProvider>
-        </SettingsProvider>
-      </AuthProvider>
-    </Router>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <Router>
+          <AuthProvider>
+            <SettingsProvider>
+              <ToastProvider>
+                <FavoritesProvider>
+                  <CartProvider>
+                    <App />
+                  </CartProvider>
+                </FavoritesProvider>
+              </ToastProvider>
+            </SettingsProvider>
+          </AuthProvider>
+        </Router>
+      </ThemeProvider>
+    </ErrorBoundary>
   </React.StrictMode>
 );
 

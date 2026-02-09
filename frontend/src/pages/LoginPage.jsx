@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import Header from '../components/Header';
+import axios from 'axios';
 import './AuthPage.css'; // Changed to shared CSS
 import foodBackground from '../assets/images/food-background.jpg';
 
@@ -16,10 +17,11 @@ const LoginPage = () => {
     const [errors, setErrors] = useState({});
     const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
-    const { login, isLoggedIn } = useAuth();
-    const { showInfo } = useToast();
+    const { login, isLoggedIn, setAuth } = useAuth();
+    const { showInfo, showError, showSuccess } = useToast();
     const location = useLocation();
     const [successMessage, setSuccessMessage] = useState('');
+    const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
     useEffect(() => {
         if (isLoggedIn) {
@@ -84,8 +86,121 @@ const LoginPage = () => {
         navigate('/forgot-password');
     };
 
+    useEffect(() => {
+        // Wait for Google script to load, then initialize
+        const initGoogleSignIn = () => {
+            if (window.google && window.google.accounts && process.env.REACT_APP_GOOGLE_CLIENT_ID) {
+                try {
+                    window.google.accounts.id.initialize({
+                        client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
+                        callback: handleGoogleCallback,
+                    });
+                    console.log('Google Sign-In initialized successfully');
+                } catch (error) {
+                    console.error('Error initializing Google Sign-In:', error);
+                }
+            }
+        };
+
+        // Check if Google script is already loaded
+        if (window.google) {
+            initGoogleSignIn();
+        } else {
+            // Wait for script to load (check every 100ms)
+            const checkGoogle = setInterval(() => {
+                if (window.google) {
+                    clearInterval(checkGoogle);
+                    initGoogleSignIn();
+                }
+            }, 100);
+            
+            // Timeout after 5 seconds
+            setTimeout(() => {
+                clearInterval(checkGoogle);
+                if (!window.google) {
+                    console.error('Google Sign-In script failed to load after 5 seconds');
+                }
+            }, 5000);
+        }
+    }, []);
+
+    const handleGoogleCallback = async (response) => {
+        setIsGoogleLoading(true);
+        try {
+            const { data } = await axios.post(
+                `${process.env.REACT_APP_API_URL}/api/auth/google`,
+                { idToken: response.credential }
+            );
+
+            if (data.success && data.token) {
+                localStorage.setItem('authToken', data.token);
+                setAuth(data.token, data.user);
+                showSuccess(data.isNewUser ? 'Welcome to FoodFreaky! 🎉' : 'Welcome back!');
+                navigate('/dashboard');
+            }
+        } catch (error) {
+            console.error('Google login error:', error);
+            showError(error.response?.data?.msg || 'Google login failed. Please try again.');
+        } finally {
+            setIsGoogleLoading(false);
+        }
+    };
+
     const handleGoogleLogin = () => {
-        showInfo('Google Login coming soon! 🚀');
+        if (!process.env.REACT_APP_GOOGLE_CLIENT_ID) {
+            console.error('Google Client ID is missing!');
+            showError('Google Sign-In is not configured. Please contact support.');
+            return;
+        }
+
+        if (!window.google || !window.google.accounts) {
+            showError('Google Sign-In is still loading. Please wait a moment and try again.');
+            return;
+        }
+
+        try {
+            // Use renderButton approach for more reliable sign-in
+            const buttonDiv = document.createElement('div');
+            buttonDiv.id = 'google-signin-button';
+            buttonDiv.style.display = 'none';
+            document.body.appendChild(buttonDiv);
+
+            window.google.accounts.id.renderButton(
+                buttonDiv,
+                {
+                    theme: 'outline',
+                    size: 'large',
+                    text: 'signin_with',
+                    width: '100%',
+                    type: 'standard',
+                }
+            );
+
+            // Trigger the button click programmatically
+            const button = buttonDiv.querySelector('div[role="button"]');
+            if (button) {
+                button.click();
+            } else {
+                // Fallback: use prompt
+                window.google.accounts.id.prompt();
+            }
+
+            // Clean up after a delay
+            setTimeout(() => {
+                if (buttonDiv.parentNode) {
+                    buttonDiv.parentNode.removeChild(buttonDiv);
+                }
+            }, 1000);
+        } catch (error) {
+            console.error('Error with Google Sign-In:', error);
+            // Fallback to prompt
+            try {
+                window.google.accounts.id.prompt();
+            } catch (promptError) {
+                console.error('Prompt also failed:', promptError);
+                showError('An error occurred with Google Sign-In. Please check your Google Cloud Console settings.');
+            }
+        }
     };
 
     const handleSignUp = () => {

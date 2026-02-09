@@ -102,13 +102,15 @@ export const EmptyRestaurants = ({ onClearFilters, hasFilters = false }) => (
 /**
  * Empty Menu Items State
  */
-export const EmptyMenuItems = ({ searchQuery, onClearSearch }) => (
+export const EmptyMenuItems = ({ searchQuery, activeCategory, onClearSearch }) => (
     <EmptyState
         icon="🍕"
-        title={searchQuery ? "No items found" : "No items in this category"}
+        title={searchQuery ? "No items found" : activeCategory ? `No items in "${activeCategory}"` : "No items in this category"}
         message={searchQuery 
             ? `We couldn't find any items matching "${searchQuery}". Try a different search term.`
-            : "This category doesn't have any items yet."
+            : activeCategory
+                ? `The "${activeCategory}" category doesn't have any items yet. Try selecting a different category.`
+                : "This category doesn't have any items yet."
         }
         actionLabel={searchQuery ? "Clear Search" : undefined}
         action={searchQuery ? onClearSearch : undefined}
