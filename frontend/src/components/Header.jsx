@@ -33,6 +33,11 @@ const Header = () => {
         setIsMobileMenuOpen(false);
     };
 
+    const handleMobileProfileClick = () => {
+        setIsMobileMenuOpen(false);
+        setIsProfileModalOpen(true);
+    };
+
     return (
         <>
             <header className="relative z-20 p-4 sm:p-6">
@@ -131,6 +136,11 @@ const Header = () => {
                                 </svg>
                             )}
                         </button>
+                        {isLoggedIn && (
+                            <button onClick={toggleProfileModal} className="header-btn-icon user-profile-circle mr-2" aria-label="Open profile">
+                                {user && user.name ? user.name.charAt(0).toUpperCase() : '?'}
+                            </button>
+                        )}
                         <button onClick={openCart} className="header-btn-icon cart-btn mr-2">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -157,7 +167,8 @@ const Header = () => {
                     )}
                     {isLoggedIn ? (
                         <>
-                            <button onClick={() => { handleMobileLinkClick('/dashboard'); toggleProfileModal(); }} className="mobile-menu-link">My Profile</button>
+                            <button onClick={() => handleMobileLinkClick('/dashboard')} className="mobile-menu-link">Dashboard</button>
+                            <button onClick={handleMobileProfileClick} className="mobile-menu-link">My Profile</button>
                             <button onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }} className="mobile-menu-link text-red-400">Logout</button>
                         </>
                     ) : (

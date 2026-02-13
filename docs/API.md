@@ -302,6 +302,6 @@ Currently no rate limiting is implemented, but it's recommended for production u
 ## CORS
 The API is configured to accept requests from:
 - `http://localhost:3000` (development)
-- `https://cheerful-cannoli-94af42.netlify.app` (production)
+
 - `https://foodfreaky.in`
 - `https://www.foodfreaky.in`
