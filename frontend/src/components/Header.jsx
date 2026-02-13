@@ -24,6 +24,10 @@ const Header = () => {
         setIsProfileModalOpen(!isProfileModalOpen);
     };
 
+    const openProfileModal = () => {
+        setIsProfileModalOpen(true);
+    };
+
     const toggleMobileMenu = () => {
         setIsMobileMenuOpen(!isMobileMenuOpen);
     };
@@ -31,6 +35,13 @@ const Header = () => {
     const handleMobileLinkClick = (path) => {
         navigate(path);
         setIsMobileMenuOpen(false);
+    };
+
+    const handleMobileProfileOpen = () => {
+        setIsMobileMenuOpen(false);
+        setTimeout(() => {
+            setIsProfileModalOpen(true);
+        }, 120);
     };
 
     return (
@@ -137,6 +148,15 @@ const Header = () => {
                             </svg>
                             <span className="cart-count">{cartCount}</span>
                         </button>
+                        {isLoggedIn && (
+                            <button
+                                onClick={openProfileModal}
+                                className="header-btn-icon user-profile-circle mr-2"
+                                aria-label="Open profile"
+                            >
+                                {user && user.name ? user.name.charAt(0).toUpperCase() : '?'}
+                            </button>
+                        )}
                         <button onClick={toggleMobileMenu} className="text-white text-3xl">
                             ☰
                         </button>
@@ -157,7 +177,8 @@ const Header = () => {
                     )}
                     {isLoggedIn ? (
                         <>
-                            <button onClick={() => { handleMobileLinkClick('/dashboard'); toggleProfileModal(); }} className="mobile-menu-link">My Profile</button>
+                            <button onClick={() => handleMobileLinkClick('/dashboard')} className="mobile-menu-link">Dashboard</button>
+                            <button onClick={handleMobileProfileOpen} className="mobile-menu-link">My Profile</button>
                             <button onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }} className="mobile-menu-link text-red-400">Logout</button>
                         </>
                     ) : (
