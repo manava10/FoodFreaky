@@ -17,3 +17,124 @@
 .floating-element-slow {
     animation: floatSlow 8s ease-in-out infinite;
 }
+
+@keyframes floatHeart {
+    0%, 100% { transform: translateY(0px) scale(1); }
+    50% { transform: translateY(-16px) scale(1.08); }
+}
+
+@keyframes glowPulse {
+    0%, 100% { box-shadow: 0 0 14px rgba(244, 114, 182, 0.45); }
+    50% { box-shadow: 0 0 22px rgba(236, 72, 153, 0.8); }
+}
+
+@keyframes shine {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.floating-heart {
+    animation: floatHeart 5s ease-in-out infinite;
+}
+
+.floating-heart-slow {
+    animation: floatHeart 7s ease-in-out infinite;
+}
+
+.valentine-banner {
+    background: linear-gradient(90deg, #e11d48, #ec4899, #fb7185);
+    background-size: 200% 200%;
+    animation: shine 6s ease infinite;
+}
+
+.valentine-cta {
+    animation: glowPulse 2.8s ease-in-out infinite;
+}
+
+.valentine-chip {
+    background: rgba(236, 72, 153, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    backdrop-filter: blur(2px);
+}
+
+.valentine-offer-card {
+    max-width: 760px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    background: linear-gradient(135deg, rgba(190, 24, 93, 0.7), rgba(236, 72, 153, 0.55));
+    backdrop-filter: blur(5px);
+    box-shadow: 0 10px 28px rgba(190, 24, 93, 0.4);
+}
+
+.coupon-code-pill {
+    background: rgba(255, 255, 255, 0.95);
+    color: #be185d;
+    border-radius: 999px;
+    padding: 0.3rem 1rem;
+    border: 2px dashed rgba(190, 24, 93, 0.75);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 132px;
+}
+
+.valentine-hero-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.valentine-badge {
+    padding: 0.45rem 0.9rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    background: rgba(190, 24, 93, 0.45);
+    backdrop-filter: blur(2px);
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+@media (max-width: 900px) {
+    .valentine-hero-grid {
+        grid-template-columns: 1fr;
+        gap: 0.85rem;
+    }
+
+    .valentine-hero-grid section {
+        text-align: center;
+    }
+
+    .valentine-hero-grid section p {
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .valentine-hero-grid aside {
+        max-width: 640px;
+        margin: 0 auto;
+        width: 100%;
+    }
+
+    .valentine-offer-card {
+        border-radius: 16px;
+    }
+
+    .valentine-chip {
+        margin-top: 0.15rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .valentine-badge {
+        font-size: 0.72rem;
+        padding: 0.4rem 0.75rem;
+    }
+
+    .coupon-code-pill {
+        min-width: 118px;
+        padding: 0.25rem 0.85rem;
+    }
+}
