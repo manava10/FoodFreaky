@@ -37,6 +37,15 @@ exports.createOrder = async (req, res) => {
             return res.status(400).json({ msg: 'Shipping address is required' });
         }
 
+        // Enforce valid contact number before allowing order placement.
+        const contactNumber = (req.user.contactNumber || '').trim();
+        const isValidContactNumber = /^[0-9]{10}$/.test(contactNumber) && contactNumber !== '0000000000';
+        if (!isValidContactNumber) {
+            return res.status(400).json({
+                msg: 'Please update your contact number before placing an order'
+            });
+        }
+
         // Validate item quantities
         for (const item of items) {
             if (!item.name || typeof item.name !== 'string') {
