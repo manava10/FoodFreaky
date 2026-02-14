@@ -13,7 +13,7 @@ const CheckoutPage = () => {
     const { cartItems, cartTotal, clearCart } = useCart();
     const { user, authToken } = useAuth();
     const { settings, isLoadingSettings } = useSettings();
-    const { showError, showSuccess } = useToast();
+    const { showError } = useToast();
     const navigate = useNavigate();
 
     const [address, setAddress] = useState('');
@@ -29,10 +29,11 @@ const CheckoutPage = () => {
     const [userCredits, setUserCredits] = useState(0);
     const [creditsToUse, setCreditsToUse] = useState(0);
     const [loadingCredits, setLoadingCredits] = useState(true);
+    const isValidContactNumber = (value) => /^[0-9]{10}$/.test(value) && value !== '0000000000';
 
     useEffect(() => {
         if (user && user.contactNumber) {
-            setContactNumber(user.contactNumber);
+            setContactNumber(user.contactNumber === '0000000000' ? '' : user.contactNumber);
         }
     }, [user]);
 
@@ -158,8 +159,16 @@ const CheckoutPage = () => {
     const finalTotal = Math.max(0, orderValueBeforeCredits - effectiveCreditsToUse);
 
     const handlePlaceOrder = async () => {
-        if (!address || !contactNumber) {
+        const trimmedAddress = address.trim();
+        const normalizedContactNumber = contactNumber.trim();
+
+        if (!trimmedAddress || !normalizedContactNumber) {
             showError('Please fill in your address and contact number.');
+            return;
+        }
+
+        if (!isValidContactNumber(normalizedContactNumber)) {
+            showError('Please enter a valid 10-digit contact number (cannot be 0000000000).');
             return;
         }
         
@@ -182,13 +191,19 @@ const CheckoutPage = () => {
         const restaurantIdString = String(restaurantId);
         
         setIsPlacingOrder(true);
+        const config = {
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${authToken}`,
+            },
+        };
         const orderData = {
             items: (cartItems || []).map(item => ({
                 name: item.name,
                 price: item.price,
                 quantity: item.quantity,
             })),
-            shippingAddress: address,
+            shippingAddress: trimmedAddress,
             itemsPrice: subtotal,
             taxPrice: taxAmount,
             shippingPrice: deliveryCharge,
@@ -205,12 +220,18 @@ const CheckoutPage = () => {
         });
 
         try {
-            const config = {
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${authToken}`,
-                },
-            };
+            const storedContactNumber = (user?.contactNumber || '').trim();
+            const shouldUpdateProfileContact = !isValidContactNumber(storedContactNumber) || storedContactNumber !== normalizedContactNumber;
+
+            // Ensure contact number is saved for Google sign-in users before placing order.
+            if (shouldUpdateProfileContact) {
+                await axios.put(
+                    `${process.env.REACT_APP_API_URL}/api/auth/profile`,
+                    { contactNumber: normalizedContactNumber },
+                    config
+                );
+            }
+
             await axios.post(`${process.env.REACT_APP_API_URL}/api/orders`, orderData, config);
             
             // Refresh credits if used
