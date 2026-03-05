@@ -8,8 +8,9 @@ const HomePage = () => {
     const navigate = useNavigate();
     const [couponCopied, setCouponCopied] = useState(false);
     const [couponRevealed, setCouponRevealed] = useState(false);
-    const isHoliCampaign = true; // Temporary festival theme switch
-    const couponCode = 'HOLI25';
+    const today = new Date();
+    const isValentineWeek = today.getMonth() === 1 && today.getDate() >= 10 && today.getDate() <= 16;
+    const couponCode = 'LOVE35';
 
     const handleCopyCoupon = async () => {
         try {
@@ -36,11 +37,11 @@ const HomePage = () => {
                     <div className="floating-element-slow absolute top-1/3 left-1/2 text-2xl opacity-30">🌮</div>
                     <div className="floating-element absolute bottom-20 right-1/3 text-3xl opacity-25">🍰</div>
                     <div className="floating-element-slow absolute top-60 left-20 text-2xl opacity-20">🥗</div>
-                    {isHoliCampaign && (
+                    {isValentineWeek && (
                         <>
-                            <div className="floating-color absolute top-24 right-1/4 text-3xl opacity-60">🎨</div>
-                            <div className="floating-color-slow absolute bottom-28 left-1/3 text-2xl opacity-55">🌈</div>
-                            <div className="floating-color absolute top-1/2 right-10 text-2xl opacity-50">✨</div>
+                            <div className="floating-heart absolute top-24 right-1/4 text-3xl opacity-50">❤️</div>
+                            <div className="floating-heart-slow absolute bottom-28 left-1/3 text-2xl opacity-45">💕</div>
+                            <div className="floating-heart absolute top-1/2 right-10 text-2xl opacity-40">💖</div>
                         </>
                     )}
                 </div>
@@ -52,10 +53,10 @@ const HomePage = () => {
 
             {/* Banners */}
             <div className="absolute top-20 left-0 right-0 z-10 text-center shadow-md">
-                {isHoliCampaign && (
-                    <div className="holi-banner py-2 px-4">
+                {isValentineWeek && (
+                    <div className="valentine-banner py-2 px-4">
                         <p className="text-sm sm:text-base text-white font-semibold tracking-wide">
-                            Holi Splash Offer: Reveal your festive gift and color your cravings
+                            Valentine Week Special: Tap to find out your gift from us 🎁
                         </p>
                     </div>
                 )}
@@ -68,66 +69,66 @@ const HomePage = () => {
 
             {/* Main Content */}
             <main className="relative z-10 flex flex-grow items-start md:items-center justify-center px-4 sm:px-6 pt-44 sm:pt-40 md:pt-24 pb-6">
-                {isHoliCampaign ? (
-                    <div className="w-full max-w-6xl mx-auto holi-hero-grid">
+                {isValentineWeek ? (
+                    <div className="w-full max-w-6xl mx-auto valentine-hero-grid">
                         <section className="text-left text-white">
-                            <p className="holi-badge inline-flex items-center gap-2 mb-5">
-                                <span>Holi Festival Theme</span>
-                                <span>Limited Time</span>
+                            <p className="valentine-badge inline-flex items-center gap-2 mb-5">
+                                <span>Valentine Week</span>
+                                <span>Feb 10 - Feb 16</span>
                             </p>
                             <h1 className="text-3xl sm:text-5xl md:text-7xl font-light mb-4 sm:mb-5 leading-[1.12]">
-                                Celebrate Holi with
-                                <span className="block text-yellow-200 font-normal mt-1">FoodFreaky Colors</span>
+                                Love at first bite with
+                                <span className="block text-pink-300 font-normal mt-1">FoodFreaky</span>
                             </h1>
                             <p className="text-sm sm:text-lg md:text-xl opacity-90 max-w-xl mb-5 sm:mb-6">
-                                Add flavors to your Holi celebration with festive meals, sweets, and fresh picks.
-                                Your party platter arrives fast and colorful.
+                                Send comfort food, desserts, and fresh picks in minutes.
+                                Celebrate this week with a special offer for every lovely order.
                             </p>
                             <div className="flex flex-wrap gap-3 mb-4">
                                 <button
                                     onClick={() => navigate('/restaurants')}
-                                    className="holi-cta w-full sm:w-auto text-white px-8 sm:px-10 py-3 rounded-full text-base sm:text-lg font-bold transition-all duration-300 transform hover:scale-105 shadow-2xl"
+                                    className="valentine-cta w-full sm:w-auto bg-pink-500 hover:bg-pink-600 text-white px-8 sm:px-10 py-3 rounded-full text-base sm:text-lg font-bold transition-all duration-300 transform hover:scale-105 shadow-2xl"
                                 >
-                                    Start Holi Feast 🌈
+                                    Start Romantic Order ❤️
                                 </button>
                                 <button
                                     onClick={() => navigate('/fruits')}
-                                    className="w-full sm:w-auto px-8 sm:px-10 py-3 rounded-full text-base sm:text-lg font-bold text-white border border-yellow-200 bg-orange-900/35 hover:bg-orange-900/55 transition-colors duration-300"
+                                    className="w-full sm:w-auto px-8 sm:px-10 py-3 rounded-full text-base sm:text-lg font-bold text-white border border-pink-200 bg-pink-900/35 hover:bg-pink-900/55 transition-colors duration-300"
                                 >
-                                    Explore Festive Fruits 🥭
+                                    Add Fresh Fruits 🍓
                                 </button>
                             </div>
-                            <p className="inline-block holi-chip px-4 py-1 rounded-full text-sm sm:text-base font-medium text-white">
-                                Festive offer valid for limited time
+                            <p className="inline-block valentine-chip px-4 py-1 rounded-full text-sm sm:text-base font-medium text-white">
+                                Offer valid this week only
                             </p>
                         </section>
 
-                        <aside className="holi-offer-card p-4 sm:p-7 text-white">
+                        <aside className="valentine-offer-card p-4 sm:p-7 text-white">
                             <p className="text-sm uppercase tracking-widest font-semibold opacity-90 mb-2">
-                                Festive Coupon
+                                Exclusive Coupon
                             </p>
-                            <h2 className="text-xl sm:text-3xl font-bold mb-2">Get Flat Rs 25 Off</h2>
+                            <h2 className="text-xl sm:text-3xl font-bold mb-2">Get Flat Discount</h2>
                             <p className="text-sm sm:text-base opacity-90 mb-4">
-                                Tap below to reveal your Holi gift coupon and get Rs 25 off at checkout.
+                                Tap below to reveal your Valentine's gift coupon.
                             </p>
 
                             {!couponRevealed ? (
                                 <button
                                     onClick={() => setCouponRevealed(true)}
-                                    className="w-full sm:w-auto mt-1 px-5 py-2 rounded-full bg-white text-orange-600 font-bold text-sm sm:text-base hover:bg-yellow-50 transition-colors duration-200"
+                                    className="w-full sm:w-auto mt-1 px-5 py-2 rounded-full bg-white text-pink-600 font-bold text-sm sm:text-base hover:bg-pink-50 transition-colors duration-200"
                                 >
-                                    Tap to reveal your Holi gift 🎁
+                                    Tap to find out gift from us 🎁
                                 </button>
                             ) : (
                                 <>
-                                    <div className="holi-code-pill text-2xl sm:text-3xl font-extrabold tracking-wider mb-4">
+                                    <div className="coupon-code-pill text-2xl sm:text-3xl font-extrabold tracking-wider mb-4">
                                         {couponCode}
                                     </div>
                                     <button
                                         onClick={handleCopyCoupon}
-                                        className="w-full sm:w-auto mt-1 px-5 py-2 rounded-full bg-white text-orange-600 font-bold text-sm sm:text-base hover:bg-yellow-50 transition-colors duration-200"
+                                        className="w-full sm:w-auto mt-1 px-5 py-2 rounded-full bg-white text-pink-600 font-bold text-sm sm:text-base hover:bg-pink-50 transition-colors duration-200"
                                     >
-                                        {couponCopied ? 'Copied: HOLI35' : 'Copy Code'}
+                                        {couponCopied ? 'Copied: LOVE35' : 'Copy Code'}
                                     </button>
                                 </>
                             )}
@@ -186,7 +187,7 @@ const HomePage = () => {
 
                     <div className="border-t border-gray-600 mt-2 pt-2 text-center">
                         <p className="text-gray-400 text-sm">
-                            © 2025 FoodFreaky. All rights reserved. | Made with ❤️ for food lovers {isHoliCampaign && 'and festive Holi vibes this season 🌈'}
+                            © 2025 FoodFreaky. All rights reserved. | Made with ❤️ for food lovers {isValentineWeek && 'and extra love this week 💕'}
                         </p>
                     </div>
                 </div>
