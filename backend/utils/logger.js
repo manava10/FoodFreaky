@@ -71,13 +71,12 @@ const logger = winston.createLogger({
     ],
 });
 
-// Add console transport for non-production environments
-if (process.env.NODE_ENV !== 'production') {
-    logger.add(new winston.transports.Console({
-        format: consoleFormat,
-        level: 'debug',
-    }));
-}
+// Add console transport in all environments so platform logs (e.g., Render) capture output.
+// In production this is critical for debugging runtime issues.
+logger.add(new winston.transports.Console({
+    format: consoleFormat,
+    level: process.env.LOG_LEVEL || (process.env.NODE_ENV === 'production' ? 'info' : 'debug'),
+}));
 
 // Create a stream object for Morgan HTTP logger (if needed)
 logger.stream = {
