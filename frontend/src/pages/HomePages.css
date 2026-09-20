@@ -48,6 +48,36 @@
     animation: shine 6s ease infinite;
 }
 
+.google-login-banner {
+    color: #1f2937;
+    background: linear-gradient(90deg, #fff 0%, #fff7ed 50%, #eff6ff 100%);
+    border-top: 1px solid rgba(255, 255, 255, 0.68);
+    border-bottom: 1px solid rgba(251, 146, 60, 0.35);
+}
+
+.google-login-banner p {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    line-height: 1.35;
+}
+
+.google-login-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.45rem;
+    height: 1.45rem;
+    flex: 0 0 auto;
+    border-radius: 999px;
+    background: conic-gradient(from 45deg, #4285f4, #34a853, #fbbc05, #ea4335, #4285f4);
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 800;
+    box-shadow: 0 3px 10px rgba(31, 41, 55, 0.16);
+}
+
 .valentine-cta {
     animation: glowPulse 2.8s ease-in-out infinite;
 }
@@ -128,6 +158,11 @@
 }
 
 @media (max-width: 640px) {
+    .google-login-banner p {
+        align-items: flex-start;
+        text-align: left;
+    }
+
     .valentine-badge {
         font-size: 0.72rem;
         padding: 0.4rem 0.75rem;
