@@ -60,6 +60,12 @@ const HomePage = () => {
                         </p>
                     </div>
                 )}
+                <div className="google-login-banner py-2.5 px-4">
+                    <p className="text-sm sm:text-base font-semibold">
+                        <span className="google-login-icon" aria-hidden="true">G</span>
+                        Please use Sign in with Google for a faster, secure login experience.
+                    </p>
+                </div>
                 <div className="bg-blue-100 py-2 px-4">
                     <p className="text-sm text-blue-800 font-semibold">
                         We only serve on Saturday, Sunday, and Monday evenings.
@@ -68,7 +74,7 @@ const HomePage = () => {
             </div>
 
             {/* Main Content */}
-            <main className="relative z-10 flex flex-grow items-start md:items-center justify-center px-4 sm:px-6 pt-44 sm:pt-40 md:pt-24 pb-6">
+            <main className="relative z-10 flex flex-grow items-start md:items-center justify-center px-4 sm:px-6 pt-52 sm:pt-48 md:pt-32 pb-6">
                 {isValentineWeek ? (
                     <div className="w-full max-w-6xl mx-auto valentine-hero-grid">
                         <section className="text-left text-white">
