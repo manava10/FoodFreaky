@@ -151,6 +151,7 @@ const schemas = {
 
     // Order creation schema
     createOrder: Joi.object({
+        checkoutKey: Joi.string().pattern(/^[a-zA-Z0-9_-]{16,128}$/).optional(),
         items: Joi.array()
             .min(1)
             .items(
@@ -290,6 +291,7 @@ const schemas = {
                     Joi.object({
                         name: Joi.string().trim().required(),
                         price: Joi.number().positive().required(),
+                        description: Joi.string().max(2000).allow('').optional(),
                         emoji: Joi.string().allow('', null).optional(),
                         imageUrl: Joi.string().uri().allow('', null).optional()
                     })
@@ -298,6 +300,26 @@ const schemas = {
         ).optional(),
         isAcceptingOrders: Joi.boolean().default(true)
     }),
+
+    menuParams: Joi.object({
+        restaurantId: Joi.string().hex().length(24).required(),
+        itemId: Joi.string().hex().length(24).optional()
+    }),
+    addMenuItem: Joi.object({
+        category: Joi.string().trim().max(100).required(),
+        name: Joi.string().trim().max(100).required(),
+        price: Joi.number().min(0).required(),
+        description: Joi.string().max(2000).allow('').optional(),
+        emoji: Joi.string().max(50).allow('').optional(),
+        imageUrl: Joi.string().uri().allow('', null).optional()
+    }),
+    updateMenuItem: Joi.object({
+        name: Joi.string().trim().max(100).optional(),
+        price: Joi.number().min(0).optional(),
+        description: Joi.string().max(2000).allow('').optional(),
+        emoji: Joi.string().max(50).allow('').optional(),
+        imageUrl: Joi.string().uri().allow('', null).optional()
+    }).min(1),
 
     // Update settings schema (admin)
     updateSettings: Joi.object({

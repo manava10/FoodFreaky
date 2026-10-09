@@ -124,31 +124,35 @@ exports.toggleAcceptingOrders = async (req, res) => {
 // @access  Private (Admin)
 exports.addMenuItem = async (req, res) => {
     try {
-        const { category, name, price, emoji, imageUrl } = req.body;
+        const { category, name, price, description, emoji, imageUrl } = req.body;
         const { restaurantId } = req.params;
 
-        const restaurant = await Restaurant.findById(restaurantId);
+        const item = { name, price, description, emoji, imageUrl };
+        const options = { new: true, runValidators: true };
+        // Each push resolves the category against the current document. A stale
+        // array index must never send an item to another category after deletion.
+        for (let attempt = 0; attempt < 3; attempt++) {
+            let restaurant = await Restaurant.findOneAndUpdate(
+                { _id: restaurantId, 'menu.category': category },
+                { $push: { 'menu.$.items': item } },
+                options
+            ).lean();
+            if (restaurant) return res.status(201).json({ success: true, data: restaurant });
 
-        if (!restaurant) {
+            // Create the category only if another writer has not created it.
+            restaurant = await Restaurant.findOneAndUpdate(
+                { _id: restaurantId, 'menu.category': { $ne: category } },
+                { $push: { menu: { category, items: [item] } } },
+                options
+            ).lean();
+            if (restaurant) return res.status(201).json({ success: true, data: restaurant });
+            // A competing addition/deletion can change the category between the
+            // two conditional operations. Recheck instead of replacing the menu.
+        }
+        if (!await Restaurant.exists({ _id: restaurantId })) {
             return res.status(404).json({ msg: 'Restaurant not found' });
         }
-
-        // Find the menu category
-        const menuCategory = restaurant.menu.find(m => m.category === category);
-
-        if (menuCategory) {
-            // Add item to existing category
-            menuCategory.items.push({ name, price, emoji, imageUrl });
-        } else {
-            // Create new category and add item
-            restaurant.menu.push({
-                category,
-                items: [{ name, price, emoji, imageUrl }]
-            });
-        }
-
-        await restaurant.save();
-        res.status(201).json({ success: true, data: restaurant });
+        res.status(409).json({ msg: 'Menu changed during this request. Please try again.' });
 
     } catch (error) {
         console.error('Error adding menu item:', error);
@@ -162,39 +166,54 @@ exports.addMenuItem = async (req, res) => {
 exports.updateMenuItem = async (req, res) => {
     try {
         const { restaurantId, itemId } = req.params;
-        const { name, price, description, imageUrl } = req.body;
-
-        const restaurant = await Restaurant.findById(restaurantId);
-
-        if (!restaurant) {
-            return res.status(404).json({ msg: 'Restaurant not found' });
-        }
-
-        let itemUpdated = false;
-        restaurant.menu.forEach(menuCategory => {
-            const item = menuCategory.items.id(itemId);
-            if (item) {
-                item.name = name !== undefined ? name : item.name;
-                item.price = price !== undefined ? price : item.price;
-                item.description = description !== undefined ? description : item.description;
-                item.imageUrl = imageUrl !== undefined ? imageUrl : item.imageUrl;
-                itemUpdated = true;
+        const fields = {};
+        for (const field of ['name', 'price', 'description', 'emoji', 'imageUrl']) {
+            if (req.body[field] !== undefined) {
+                fields[`menu.$[category].items.$[item].${field}`] = req.body[field];
             }
-        });
-
-        if (!itemUpdated) {
-            return res.status(404).json({ msg: 'Menu item not found' });
         }
-
-        const updatedRestaurant = await restaurant.save();
-
-        res.json({
-            success: true,
-            data: updatedRestaurant,
-        });
-
+        const restaurant = await Restaurant.findOneAndUpdate(
+            { _id: restaurantId, 'menu.items._id': itemId },
+            { $set: fields },
+            {
+                new: true,
+                runValidators: true,
+                arrayFilters: [{ 'category.items._id': itemId }, { 'item._id': itemId }],
+            }
+        ).lean();
+        if (!restaurant) return res.status(404).json({ msg: 'Restaurant or menu item not found' });
+        res.json({ success: true, data: restaurant });
     } catch (error) {
-        console.error('Error updating menu item:', error);
-        res.status(500).json({ msg: 'Server Error' });
+        logger.error('Error updating menu item', { error: error.message });
+        res.status(error.name === 'ValidationError' ? 400 : 500).json({ msg: 'Failed to update menu item' });
+    }
+};
+
+// Remove the item and empty categories atomically, without replacing other edits.
+exports.deleteMenuItem = async (req, res) => {
+    try {
+        const { restaurantId, itemId } = req.params;
+        const mongoose = require('mongoose');
+        const restaurant = await Restaurant.findOneAndUpdate(
+            { _id: restaurantId, 'menu.items._id': itemId },
+            [{ $set: { menu: {
+                $filter: {
+                    input: { $map: {
+                        input: '$menu', as: 'category',
+                        in: { $mergeObjects: ['$$category', { items: { $filter: {
+                            input: '$$category.items', as: 'item',
+                            cond: { $ne: ['$$item._id', new mongoose.Types.ObjectId(itemId)] },
+                        } } }] },
+                    } },
+                    as: 'category', cond: { $gt: [{ $size: '$$category.items' }, 0] },
+                },
+            } } }],
+            { new: true }
+        ).lean();
+        if (!restaurant) return res.status(404).json({ msg: 'Restaurant or menu item not found' });
+        res.json({ success: true, data: restaurant });
+    } catch (error) {
+        logger.error('Error deleting menu item', { error: error.message });
+        res.status(500).json({ msg: 'Failed to delete menu item' });
     }
 };
