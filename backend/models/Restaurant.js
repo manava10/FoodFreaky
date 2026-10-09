@@ -13,7 +13,9 @@ const MenuSchema = new mongoose.Schema({
         price: {
             type: Number,
             required: true,
+            min: 0,
         },
+        description: String,
         emoji: String,
         imageUrl: {
             type: String, // Field for the dish image URL

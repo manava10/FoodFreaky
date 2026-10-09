@@ -10,7 +10,10 @@ const OrderManager = ({ orders, setOrders, loading }) => {
     const { showSuccess, showError } = useToast();
     const [statusUpdates, setStatusUpdates] = useState({});
 
-    const orderStatuses = ['Waiting for Acceptance', 'Accepted', 'Preparing Food', 'Out for Delivery', 'Delivered', 'Cancelled'];
+    const orderStatuses = ['Waiting for Acceptance', 'Accepted', 'Preparing Food', 'Out for Delivery', 'Delivered'];
+    const availableStatuses = (status) => ['Delivered', 'Cancelled'].includes(status)
+        ? [status]
+        : [...orderStatuses.slice(orderStatuses.indexOf(status)), 'Cancelled'];
 
     const handleStatusChange = (orderId, newStatus) => {
         setStatusUpdates(prev => ({ ...prev, [orderId]: newStatus }));
@@ -34,7 +37,7 @@ const OrderManager = ({ orders, setOrders, loading }) => {
             showSuccess('Order status updated successfully!');
         } catch (error) {
             console.error('Failed to update order status:', error);
-            showError('Failed to update order status.');
+            showError(error.response?.data?.msg || 'Failed to update order status.');
         }
     };
 
@@ -98,12 +101,13 @@ const OrderManager = ({ orders, setOrders, loading }) => {
                                                 value={statusUpdates[order._id] || order.status}
                                                 onChange={(e) => handleStatusChange(order._id, e.target.value)}
                                             >
-                                                {orderStatuses.map(status => (
+                                                {availableStatuses(order.status).map(status => (
                                                     <option key={status} value={status}>{status}</option>
                                                 ))}
                                             </select>
                                             <button
                                                 className="update-status-btn"
+                                                disabled={['Delivered', 'Cancelled'].includes(order.status)}
                                                 onClick={() => handleUpdateOrder(order._id)}
                                             >
                                                 Update Status

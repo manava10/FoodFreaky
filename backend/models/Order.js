@@ -68,11 +68,19 @@ const OrderSchema = new mongoose.Schema({
         default: 0,
         min: 0,
     },
+    checkoutKey: { type: String, select: false },
+    checkoutFingerprint: { type: String, select: false },
+    creditsRefunded: { type: Number, default: 0, min: 0 },
     creditsEarned: {
         type: Number,
         default: 0,
         min: 0,
     },
+});
+
+OrderSchema.index({ user: 1, checkoutKey: 1 }, {
+    unique: true,
+    partialFilterExpression: { checkoutKey: { $type: 'string' } },
 });
 
 // Indexes for better query performance

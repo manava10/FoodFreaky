@@ -23,7 +23,7 @@ const EditRestaurantPage = () => {
     });
     const [newMenuItem, setNewMenuItem] = useState({
         name: '',
-        description: '', // Note: description is not in your MenuSchema, consider adding it
+        description: '',
         price: '',
         category: '',
         imageUrl: ''
@@ -72,10 +72,7 @@ const EditRestaurantPage = () => {
         e.preventDefault();
         try {
             const config = { headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` } };
-            await axios.put(`${process.env.REACT_APP_API_URL}/api/admin/restaurants/${id}/menu/${currentItem._id}`, currentItem, config);
-            
-            // Refresh the restaurant data to show the update
-            const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/api/admin/restaurants/${id}`, { headers: { Authorization: `Bearer ${authToken}` } });
+            const { data } = await axios.put(`${process.env.REACT_APP_API_URL}/api/admin/restaurants/${id}/menu/${currentItem._id}`, currentItem, config);
             setRestaurant(data.data);
 
             handleCloseEditModal();
@@ -132,24 +129,12 @@ const EditRestaurantPage = () => {
         }
     };
 
-    const handleDeleteItem = async (categoryName, itemId) => {
-        const updatedRestaurant = { ...restaurant };
-        const categoryIndex = updatedRestaurant.menu.findIndex(cat => cat.category === categoryName);
-
-        if (categoryIndex === -1) return; // Should not happen
-
-        // Filter out the item to be deleted
-        updatedRestaurant.menu[categoryIndex].items = updatedRestaurant.menu[categoryIndex].items.filter(item => item._id !== itemId);
-
-        // If the category is now empty, remove the category itself
-        if (updatedRestaurant.menu[categoryIndex].items.length === 0) {
-            updatedRestaurant.menu = updatedRestaurant.menu.filter(cat => cat.category !== categoryName);
-        }
-
+    const handleDeleteItem = async (itemId) => {
         try {
-            const config = { headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` } };
-            const { data } = await axios.put(`${process.env.REACT_APP_API_URL}/api/admin/restaurants/${id}`, { menu: updatedRestaurant.menu }, config);
+            const config = { headers: { Authorization: `Bearer ${authToken}` } };
+            const { data } = await axios.delete(`${process.env.REACT_APP_API_URL}/api/admin/restaurants/${id}/menu/${itemId}`, config);
             setRestaurant(data.data);
+            setError('');
         } catch (err) {
             setError(err.response?.data?.msg || 'Failed to delete menu item.');
         }
@@ -240,7 +225,7 @@ const EditRestaurantPage = () => {
                                                 <div className="flex items-center flex-shrink-0 ml-4 text-right">
                                                     <p className="font-bold text-white mr-4">₹{item.price}</p>
                                                     <button onClick={() => handleOpenEditModal(item)} className="edit-btn text-lg mr-2">✏️</button>
-                                                    <button onClick={() => handleDeleteItem(category.category, item._id)} className="delete-coupon-btn text-lg text-red-500 hover:text-red-400 transition-colors leading-none">&times;</button>
+                                                    <button onClick={() => handleDeleteItem(item._id)} className="delete-coupon-btn text-lg text-red-500 hover:text-red-400 transition-colors leading-none">&times;</button>
                                                 </div>
                                             </div>
                                         ))}

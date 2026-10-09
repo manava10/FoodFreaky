@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "test": "node --test tests/unit/*.test.js",
+    "test:integration": "node tests/run-integration.js"
   },
   "engines": {
     "node": ">=18.x"

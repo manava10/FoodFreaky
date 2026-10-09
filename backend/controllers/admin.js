@@ -3,6 +3,7 @@ const User = require('../models/User');
 const sendEmail = require('../utils/sendEmail');
 const generateInvoicePdf = require('../utils/generateInvoicePdf');
 const logger = require('../utils/logger');
+const { changeOrderStatus } = require('../services/orderLifecycle');
 
 // @desc    Credit all users with FoodFreaky credits
 // @route   POST /api/admin/credit-all-users
@@ -174,38 +175,10 @@ exports.getAllOrders = async (req, res) => {
 exports.updateOrderStatus = async (req, res) => {
     try {
         const { status } = req.body;
-        const order = await Order.findById(req.params.id).populate('user', 'name email');
-
-        if (!order) {
-            return res.status(404).json({ msg: 'Order not found' });
-        }
-        
-        // Ensure the status is a valid one from our model
-        const validStatuses = Order.schema.path('status').enumValues;
-        if (!validStatuses.includes(status)) {
-            return res.status(400).json({ msg: `Invalid status: '${status}'` });
-        }
-
-        const oldStatus = order.status;
-        order.status = status;
-        
-        // If the status changed to 'Delivered', award credits (2% of order value)
-        if (status === 'Delivered' && oldStatus !== 'Delivered' && !order.creditsEarned) {
-            const creditsToAward = Math.floor(order.totalPrice * 0.02); // 2% of order value
-            order.creditsEarned = creditsToAward;
-            
-            // Add credits to user account
-            await User.findByIdAndUpdate(order.user, {
-                $inc: { credits: creditsToAward }
-            });
-            
-            logger.info(`Awarded ${creditsToAward} credits to user ${order.user} for order ${order._id}`);
-        }
-        
-        const updatedOrder = await order.save();
-
+        const { order, changed } = await changeOrderStatus({ orderId: req.params.id, status });
+        await order.populate('user', 'name email contactNumber');
         // If the status changed to 'Delivered', send an email with the invoice
-        if (status === 'Delivered' && oldStatus !== 'Delivered') {
+        if (status === 'Delivered' && changed && order.user) {
             try {
                 const pdfBuffer = await generateInvoicePdf(order);
                 
@@ -233,14 +206,15 @@ exports.updateOrderStatus = async (req, res) => {
 
             } catch (emailError) {
                 console.error('Failed to send delivery confirmation email:', emailError);
-                // We don't block the main response for this, just log the error
+                // The committed status and credits remain valid if notification fails.
             }
         }
 
-        res.json(updatedOrder);
+        res.json(order);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ msg: 'Server Error' });
+        logger.error('Order status update failed', { error: error.message, orderId: req.params.id });
+        const status = error.name === 'CastError' ? 400 : error.statusCode || 500;
+        res.status(status).json({ msg: error.statusCode ? error.message : 'Failed to update order status' });
     }
 };
 

@@ -9,6 +9,7 @@ const {
     deleteRestaurant, 
     getRestaurantById, 
     updateMenuItem,
+    deleteMenuItem,
     addMenuItem,
     toggleAcceptingOrders
 } = require('../controllers/restaurantsAdmin');
@@ -57,9 +58,10 @@ router.route('/restaurants/:id/accepting-orders')
     .put(protect, authorize('admin'), toggleAcceptingOrders);
 
 router.route('/restaurants/:restaurantId/menu')
-    .post(protect, authorize('admin'), addMenuItem);
+    .post(protect, authorize('admin'), validate(schemas.menuParams, 'params'), validate(schemas.addMenuItem), addMenuItem);
 
 router.route('/restaurants/:restaurantId/menu/:itemId')
-    .put(protect, authorize('admin'), updateMenuItem);
+    .put(protect, authorize('admin'), validate(schemas.menuParams, 'params'), validate(schemas.updateMenuItem), updateMenuItem)
+    .delete(protect, authorize('admin'), validate(schemas.menuParams, 'params'), deleteMenuItem);
 
 module.exports = router;

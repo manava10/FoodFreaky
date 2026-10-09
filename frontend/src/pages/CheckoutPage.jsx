@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
@@ -23,6 +23,8 @@ const CheckoutPage = () => {
     const [appliedCouponCode, setAppliedCouponCode] = useState('');
     const [couponError, setCouponError] = useState('');
     const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+    const placingOrderRef = useRef(false);
+    const checkoutAttemptRef = useRef(null);
     const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
     const [couponSuccess, setCouponSuccess] = useState(false);
     const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
@@ -159,6 +161,7 @@ const CheckoutPage = () => {
     const finalTotal = Math.max(0, orderValueBeforeCredits - effectiveCreditsToUse);
 
     const handlePlaceOrder = async () => {
+        if (placingOrderRef.current || isSuccessModalOpen) return;
         const trimmedAddress = address.trim();
         const normalizedContactNumber = contactNumber.trim();
 
@@ -190,6 +193,7 @@ const CheckoutPage = () => {
         // Ensure restaurant ID is a string (MongoDB ObjectIds are strings)
         const restaurantIdString = String(restaurantId);
         
+        placingOrderRef.current = true;
         setIsPlacingOrder(true);
         const config = {
             headers: {
@@ -232,6 +236,13 @@ const CheckoutPage = () => {
                 );
             }
 
+            // Preserve the key after an uncertain response so retrying this cart
+            // cannot debit credits or create the order a second time.
+            const fingerprint = JSON.stringify({ ...orderData, userId: user?.id || user?._id });
+            if (checkoutAttemptRef.current?.fingerprint !== fingerprint) {
+                checkoutAttemptRef.current = { fingerprint, key: Array.from(window.crypto.getRandomValues(new Uint8Array(16)), byte => byte.toString(16).padStart(2, '0')).join('') };
+            }
+            orderData.checkoutKey = checkoutAttemptRef.current.key;
             await axios.post(`${process.env.REACT_APP_API_URL}/api/orders`, orderData, config);
             
             // Refresh credits if used
@@ -270,6 +281,7 @@ const CheckoutPage = () => {
                 showError('Failed to place order. Please try again.');
             }
         } finally {
+            placingOrderRef.current = false;
             setIsPlacingOrder(false);
         }
     };
