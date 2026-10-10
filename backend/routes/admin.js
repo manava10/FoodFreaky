@@ -19,6 +19,8 @@ const { validate, schemas } = require('../middleware/validate');
 
 // Note: All routes in this file are automatically prefixed with /api/admin
 
+router.get('/traffic', protect, authorize('admin'), require('../controllers/traffic').getTraffic);
+
 // Order Management Routes (for admin & deliveryadmin)
 router.route('/orders')
     .get(protect, authorize('admin', 'deliveryadmin'), getAllOrders);

@@ -103,6 +103,7 @@ app.use('/api', generalLimiter); // Apply rate limiting to all API routes
 app.use(sanitizeInput); // Sanitize all input
 
 // Mount routers
+app.use('/api/traffic', require('./routes/traffic'));
 app.use('/api/auth', auth);
 app.use('/api/orders', orders);
 app.use('/api/restaurants', restaurants);

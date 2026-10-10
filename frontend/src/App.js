@@ -12,6 +12,7 @@ import ResetPasswordPage from './pages/ResetPasswordPage';
 import ProtectedRoute from './ProtectedRoute';
 import AdminRoute from './AdminRoute';
 import Cart from './components/Cart';
+import useVisitTracking from './hooks/useVisitTracking';
 import { useToast } from './context/ToastContext';
 
 // Lazy load admin pages and favorites (code splitting)
@@ -31,6 +32,7 @@ const PageLoader = () => (
 );
 
 function AppContent() {
+  useVisitTracking();
   const { showWarning } = useToast();
 
   useEffect(() => {

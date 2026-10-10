@@ -115,3 +115,26 @@ test('adding while deleting the last category item preserves the intended catego
     assert.deepEqual(saved.menu.find(category => category.category === 'Target').items.map(item => item.name), ['New']);
     assert.deepEqual(saved.menu.find(category => category.category === 'Other').items.map(item => item.name), ['Untouched']);
 });
+
+test('large legacy menus with malformed items do not block targeted edits or deletion', async () => {
+    const target = await Restaurant.create({ name: 'Legacy malformed menu', cuisine: 'Test', deliveryTime: '20 min', menu: [] });
+    const validId = new mongoose.Types.ObjectId();
+    const invalidId = new mongoose.Types.ObjectId();
+    // Simulate pre-existing bad data without passing it through model validation.
+    await Restaurant.collection.updateOne({ _id: target._id }, { $set: { menu: [{
+        _id: new mongoose.Types.ObjectId(), category: 'Legacy', items: [
+            { _id: validId, name: 'Valid dish', price: 50, description: 'x'.repeat(110000) },
+            { _id: invalidId, name: '', price: null },
+        ],
+    }] } });
+    const path = `/restaurants/${target.id}/menu`;
+    assert.equal((await request(`${path}/${validId}`, 'PUT', { price: 75 })).status, 200);
+    let saved = await Restaurant.collection.findOne({ _id: target._id });
+    assert.equal(saved.menu[0].items[0].price, 75);
+    assert.equal(saved.menu[0].items[1].price, null, 'unrelated legacy data is preserved');
+    assert.equal((await request(`${path}/${invalidId}`, 'PUT', { name: 'Repaired dish', price: 60 })).status, 200);
+    assert.equal((await request(`${path}/${invalidId}`, 'DELETE')).status, 200);
+    saved = await Restaurant.collection.findOne({ _id: target._id });
+    assert.equal(saved.menu[0].items.length, 1);
+    assert.equal(saved.menu[0].items[0].price, 75);
+});

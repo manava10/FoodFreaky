@@ -44,7 +44,7 @@ const freePort = () => new Promise((resolve, reject) => {
             await delay(100);
         }
         console.log('Temporary MongoDB replica set ready; running integration tests.');
-        const tests = spawn(process.execPath, ['--test', 'tests/admin-menu.test.js', 'tests/order-lifecycle.test.js'], {
+        const tests = spawn(process.execPath, ['--test', 'tests/admin-menu.test.js', 'tests/order-lifecycle.test.js', 'tests/traffic.test.js'], {
             cwd: path.resolve(__dirname, '..'), stdio: 'inherit',
             env: { ...process.env, TEST_MONGO_URI: `mongodb://127.0.0.1:${port}/?replicaSet=${replica}` },
         });
