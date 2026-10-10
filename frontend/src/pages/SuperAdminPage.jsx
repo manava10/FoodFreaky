@@ -1,3 +1,4 @@
+import TrafficStats from '../components/TrafficStats';
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
@@ -152,6 +153,8 @@ const SuperAdminPage = () => {
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
                 <h1 className="text-4xl font-bold text-white text-center mb-8">Super Admin Dashboard</h1>
                 
+                <TrafficStats />
+
                 {loading ? (
                     <AdminPageSkeleton />
                 ) : (
